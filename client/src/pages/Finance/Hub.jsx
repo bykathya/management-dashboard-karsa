@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { ROLE_UANG } from '../../utils/roles'
 import HubTabs from '../../components/common/HubTabs'
 import LabelJalur from '../../components/common/LabelJalur'
+import { ECOSYSTEM_NAME, FITUR } from '../../config/ecosystem'
 
 const WeeklyReport = lazy(() => import('../WeeklyReport/index'))
 const Forecasting  = lazy(() => import('./Forecasting'))
@@ -42,8 +43,13 @@ export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh,
   // Role di luar ROLE_UANG (Karyawan/Magang/dll) cuma boleh tab Koperasi ("Simpanan koperasi
   // saya") -- tab lain nampilin angka omset/keuangan yang server-nya juga nolak buat mereka.
   const bolehUang = roles.some(r => ROLE_UANG.includes(r.roleType))
-  const tabs = bolehUang ? HUB_TABS : HUB_TABS.filter(t => t.id === 'koperasi')
+  const tabs = (bolehUang ? HUB_TABS : HUB_TABS.filter(t => t.id === 'koperasi'))
+    .filter(t => t.id !== 'koperasi' || FITUR.koperasi)
   const aktif = tabs.some(t => t.id === tab) ? tab : (bolehUang ? bawaan : 'koperasi')
+
+  if (tabs.length === 0) {
+    return <div className="card" style={{ padding: 24, color: 'var(--text-muted)' }}>Menu Keuangan hanya untuk pengelola unit.</div>
+  }
 
   const pindah = (id) => onNavigate?.('Finance', { tab: id })
   // WeeklyReport memakai id tab internalnya sendiri ('mingguan' | 'bulanan').
@@ -65,7 +71,7 @@ export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh,
         {aktif === 'bulanan'     && <WeeklyReport embedded hubTab="bulanan"  onPindahTab={pindahDariOmset} onNavigate={onNavigate} />}
         {aktif === 'pengeluaran' && <Pengeluaran user={user} onNavigate={onNavigate} studioIdAwal={studioId} />}
         {aktif === 'forecasting' && <Forecasting user={user} onNavigate={onNavigate} />}
-        {aktif === 'koperasi'    && <Koperasi onBadgeRefresh={onBadgeRefresh} />}
+        {aktif === 'koperasi'    && FITUR.koperasi && <Koperasi onBadgeRefresh={onBadgeRefresh} />}
         {aktif === 'dana'        && <DanaPos />}
       </Suspense>
       </div>

@@ -250,7 +250,7 @@ function WeeklyWidget({ onNavigate, badges, user }) {
   const omsetDone   = !badges.WeeklyReport
   const koperDone   = !badges.Koperasi
 
-  const items = isAdmin ? [
+  const semua = isAdmin ? [
     { page: 'WeeklyReport', label: 'Pantau Laporan Omset',
       done: omsetDone, note: badges.WeeklyReport ? `${badges.WeeklyReport} belum` : 'Semua lapor' },
     { page: 'Koperasi',     label: 'Konfirmasi Koperasi',
@@ -264,6 +264,9 @@ function WeeklyWidget({ onNavigate, badges, user }) {
   ] : [
     { page: 'Koperasi',     label: 'Koperasi',              done: false, note: 'Bulanan'   },
   ]
+
+  const items = semua.filter(it => it.page !== 'Koperasi' || FITUR.koperasi)
+  if (items.length === 0) return null
 
   return (
     <div style={{ margin: '8px 0', padding: '12px', borderRadius: 10,
