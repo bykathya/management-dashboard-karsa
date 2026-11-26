@@ -2669,3 +2669,46 @@ model JadwalCentang {
 
   @@unique([jadwalId, bulan])
 }
+
+// PROFIL ANGGOTA "Tentang aku" (Karsa Circle, tahap 6, 26 Nov 2026): diisi sendiri oleh anggota, tampil di kartu Tim. Semua boleh kosong.
+// Tanpa unggahan berkas: foto berupa tautan. ndaUrl = tautan Google Drive (akses dibatasi) yang diisi koordinator; hanya dikirim ke orangnya
+// sendiri dan pengelola unitnya (Koordinator ke atas). Data resmi (rekening, gaji, alamat) tetap di tabel User/Bio, bukan di sini.
+model ProfilAnggota {
+  userId     String   @id
+  fotoUrl    String?
+  bio        String?
+  keahlian   String?
+  zodiak     String?
+  ulangTahun String? // "DD-MM" (tanpa tahun)
+  jamAktif   String?
+  status     String? // JOMBLO | TAKEN | RAHASIA
+  instagram  String?
+  ndaUrl     String?
+  ndaOleh    String?
+  updatedAt  DateTime @updatedAt
+}
+
+// MENTOR (Karsa Circle, tahap 6): mentor tidak punya akun; cukup dicatat nama & honor bulanannya di Penggajian studio.
+model MentorStudio {
+  id        String        @id @default(cuid())
+  studioId  String
+  nama      String
+  honor     Float         @default(0) // Rupiah per bulan
+  aktif     Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  bayar     MentorBayar[]
+
+  @@index([studioId, aktif])
+}
+
+model MentorBayar {
+  id        String       @id @default(cuid())
+  mentorId  String
+  mentor    MentorStudio @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  bulan     String // YYYY-MM
+  jumlah    Float
+  oleh      String?
+  pada      DateTime     @default(now())
+
+  @@unique([mentorId, bulan])
+}

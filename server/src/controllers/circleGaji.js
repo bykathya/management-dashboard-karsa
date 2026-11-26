@@ -234,7 +234,7 @@ export const bayarSlip = wrap(async (req, res) => {
 
 // ── Data slip untuk cetak / PDF ─────────────────────────────────────────────────────────────────────
 export const getSlipCetak = wrap(async (req, res) => {
-  const s = await prisma.penggajian.findUnique({ where: { id: req.params.id }, include: { user: { select: { nama: true, posisi: true } }, studio: { select: { nama: true, circle: { select: { nama: true } }, rumahUsaha: { select: { nama: true } } } }, tunjangan: { orderBy: { createdAt: 'asc' } }, lemburPresensi: { select: { menit: true, tanggalKerja: true } } } })
+  const s = await prisma.penggajian.findUnique({ where: { id: req.params.id }, include: { user: { select: { nama: true, posisi: true, namaBank: true, noRekening: true, atasNamaRekening: true } }, studio: { select: { nama: true, circle: { select: { nama: true } }, rumahUsaha: { select: { nama: true } } } }, tunjangan: { orderBy: { createdAt: 'asc' } }, lemburPresensi: { select: { menit: true, tanggalKerja: true } } } })
   if (!s) return gagal(res, 404, 'Slip tidak ditemukan')
   const pengelola = await kelolaStudio(peranKerja(req), s.studioId)
   const miliknya = s.userId === req.user.id
@@ -246,6 +246,8 @@ export const getSlipCetak = wrap(async (req, res) => {
   const lemburSusulan = [...new Set(s.lemburPresensi.map(x => x.tanggalKerja.toISOString().slice(0, 7)).filter(k => k < kunciSlip))].sort().map(k => `${BULAN[Number(k.slice(5)) - 1]} ${k.slice(0, 4)}`)
   return res.json({ success: true, data: {
     id: s.id, status: s.status, periode: `${BULAN[s.bulan - 1]} ${s.tahun}`, studio: s.studio.nama, induk: s.studio.circle?.nama ?? s.studio.rumahUsaha?.nama ?? null,
+    // Karsa Circle (26 Nov 2026, keputusan pemilik): nomor rekening LENGKAP hanya di slip cetak, yang hanya bisa dibuka orangnya sendiri & pengelola unit (cek di atas)
+    rekening: s.user.noRekening ? { bank: s.user.namaBank, nomor: s.user.noRekening, atasNama: s.user.atasNamaRekening || s.user.nama } : null,
     nama: s.user.nama, posisi: s.user.posisi, gajiPokok: s.gajiPokok, tetap: s.tunjangan.filter(t => t.rincianId).map(t => ({ nama: t.nama, jumlah: t.jumlah })), tambahan: s.tunjangan.filter(t => !t.rincianId).map(t => ({ nama: t.nama, jumlah: t.jumlah })),
     bonus: s.bonus, komisi: s.komisi, shu: s.shu, lembur: s.lembur, lemburMenit: menit, lemburHari: hari, lemburSusulan, potongan: s.potongan, thp: s.thp, catatan: s.catatan, dilaporkanOleh: s.dilaporkanOleh, tanggalBayar: tglIso(s.tanggalBayar), tanggalBayarShu: tglIso(s.tanggalBayarShu),
   } })
