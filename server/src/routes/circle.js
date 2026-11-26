@@ -28,6 +28,8 @@ import * as Rf from '../controllers/circleRefleksi.js'
 import * as Lb from '../controllers/circleLemburTunda.js'
 import * as Kh from '../controllers/circleKehadiran.js'
 import * as Jd from '../controllers/circleJadwal.js'
+import * as Pf from '../controllers/circleProfil.js'
+import * as Mn from '../controllers/circleMentor.js'
 import * as Pm from '../controllers/circlePemasukan.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
@@ -446,6 +448,17 @@ router.post('/impersonasi', authenticate, populateRoles, Op.mulaiImpersonasi)
 router.get('/profil-sdm', authenticate, populateRoles, Op.getProfilSdm)
 router.put('/profil-sdm', authenticate, populateRoles, Op.simpanProfilSdm)
 router.get('/manpower', authenticate, populateRoles, Op.getManpower)
+
+// Profil saya, kartu Tim, mentor (Karsa Circle, tahap 6, 26 Nov 2026)
+router.get('/profil-saya',              authenticate, populateRoles, Pf.getProfilSaya)
+router.put('/profil-saya',              authenticate, populateRoles, Pf.simpanProfilSaya)
+router.get('/tim-kartu',                authenticate, populateRoles, Pf.getTimKartu)
+router.put('/tim-kartu/:userId/nda',    authenticate, populateRoles, Pf.simpanNda)
+router.get('/mentor',                   authenticate, populateRoles, Mn.daftar)
+router.post('/mentor',                  authenticate, populateRoles, Mn.tambah)
+router.patch('/mentor/:id',             authenticate, populateRoles, Mn.ubah)
+router.delete('/mentor/:id',            authenticate, populateRoles, Mn.hapus)
+router.put('/mentor/:id/bayar',         authenticate, populateRoles, Mn.bayar)
 
 // Jadwal rutin Arus Kas (Karsa Circle, tahap 5, 26 Nov 2026)
 router.get('/jadwal',              authenticate, populateRoles, Jd.daftar)
