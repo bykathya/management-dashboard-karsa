@@ -3,8 +3,9 @@ import { getLingkupLaporan, getLaporanProgres } from '../controllers/laporanProg
 import { daftarFotoSampul, ambilFotoSampul, simpanFotoSampul, hapusFotoSampul } from '../controllers/fotoSampul.js'
 import { bacaLogo, simpanLogo, hapusLogo } from '../controllers/logoLaporan.js'
 import { getUnitMingguan, getLaporanMingguan } from '../controllers/laporanMingguan.js'
+import { getExecutiveSummary } from '../controllers/laporanExsum.js'
 import { authenticate }   from '../middleware/auth.js'
-import { checkMinRole }   from '../middleware/checkRole.js'
+import { checkMinRole, checkRole } from '../middleware/checkRole.js'
 
 const router = Router()
 
@@ -16,6 +17,8 @@ router.get('/progres',         authenticate, checkMinRole('KADER'), getLaporanPr
 // Weekly Report per unit (13 Okt 2026): hak per unit dicek di controller (pengurus unit & kepalanya).
 router.get('/mingguan/unit', authenticate, checkMinRole('KADER'), getUnitMingguan)
 router.get('/mingguan',      authenticate, checkMinRole('KADER'), getLaporanMingguan)
+// Executive Summary bulanan (Karsa Circle, tahap 7): Koordinator ke atas; studio disaring wilayah keuangan di controller
+router.get('/executive-summary', authenticate, checkRole(['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'KOORDINATOR', 'PENDAMPING']), getExecutiveSummary)
 
 // Galeri foto sampul & logo untuk laporan — baca KADER+, tulis = pengurus sasarannya (controller).
 router.get('/foto-sampul',         authenticate, checkMinRole('KADER'), daftarFotoSampul)
