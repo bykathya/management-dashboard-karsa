@@ -7,19 +7,19 @@
     <title>Management Dashboard</title>
     <meta name="color-scheme" content="light dark" />
     <!-- Pasang mode terang/gelap SEBELUM aplikasi dimuat supaya halaman gak berkedip.
-         Pilihan tersimpan di localStorage 'md-tema'; kosong = ikut setelan sistem.
+         Pilihan tersimpan di localStorage 'md-tema'; kosong = mode terang.
          Lihat src/utils/tema.js & :root[data-theme] di src/styles/index.css. -->
     <script>
       (function () {
         var t = null
         try { t = localStorage.getItem('md-tema') } catch (e) {}
-        if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+        if (t !== 'light' && t !== 'dark') t = 'light' // Karsa: mode terang (krem) jadi bawaan
         document.documentElement.setAttribute('data-theme', t)
       })()
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

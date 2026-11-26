@@ -5,10 +5,12 @@
 
 ## Ringkasan visual
 
-- **Tema:** bersih, aksen **toska** `#0fc1bd`, huruf **Inter** (`system-ui` cadangan).
-- **Dua mode:** gelap (`:root`, bawaan) dan terang (`:root[data-theme="light"]`). Pilihan disimpan di localStorage
+- **Tema Karsa Circle:** hitam, krem, lime neon `#d6f53a`, pink permen `#f6a8e8`; garis hitam tegas (`--line`),
+  tombol kapsul (`--pill`), bintang kilau (`--kilau`). Huruf judul **Unbounded**, huruf isi **Space Grotesk**.
+  Sidebar selalu hitam. Gambar kru di `client/public/maskot/`.
+- **Dua mode:** terang/krem (`:root[data-theme="light"]`, bawaan) dan gelap (`:root`). Pilihan disimpan di localStorage
   `md-tema` (`utils/tema.js`: `useTema`, `aturTema`) dan dipasang oleh skrip awal di `client/index.html`; kosong =
-  ikut setelan sistem. PDF punya tema terang/gelap sendiri di `components/laporan/pdf/tema.js`.
+  mode terang. PDF punya tema terang/gelap sendiri di `components/laporan/pdf/tema.js`.
 - **Layout:** sidebar tetap di kiri (`--sidebar-w` 256px) + topbar (`--header-h` 64px) + isi halaman yang bisa digulir.
   Di HP sidebar menjadi menu geser.
 

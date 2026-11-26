@@ -26,12 +26,13 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
+        <div className="login-maskot"><img src="/maskot/grup.webp" alt={`Kru ${ECOSYSTEM_NAME_FULL}`} width="1200" height="600" /></div>
         {/* Logo */}
         <div className="login-logo">
           <div className="logo-mark" style={{ width: 48, height: 48, fontSize: 22, borderRadius: 14 }}>{ECOSYSTEM_NAME[0]}</div>
           <div>
             <div className="logo-name" style={{ fontSize: 20 }}>{ECOSYSTEM_NAME}</div>
-            <div className="logo-sub">Ecosystem Dashboard</div>
+            <div className="logo-sub">Web pusat</div>
           </div>
         </div>
 
