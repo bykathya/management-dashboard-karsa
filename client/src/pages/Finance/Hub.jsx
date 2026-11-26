@@ -10,6 +10,7 @@ const Forecasting  = lazy(() => import('./Forecasting'))
 const Pengeluaran  = lazy(() => import('./Pengeluaran'))
 const Koperasi     = lazy(() => import('../Koperasi/index'))
 const DanaPos      = lazy(() => import('./index'))
+const DanaTengah   = lazy(() => import('./DanaTengah'))
 
 /* ══ HUB KEUANGAN (13 Okt 2026, pola rumahpara.app / playgroundecos.app) ══════
    Satu pintu di sidebar untuk semua urusan uang -- dulu tersebar di menu Laporan Omset (3 tab),
@@ -23,6 +24,7 @@ export const HUB_TABS = [
   { id: 'forecasting', label: '📈 Financial Forecasting' },
   { id: 'bulanan',     label: '📊 Rekap Bulanan' },
   { id: 'koperasi',    label: '🤝 Koperasi',               badge: 'Koperasi' },
+  { id: 'danatengah',  label: '🌿 Dana Tengah' },
   { id: 'dana',        label: '🏦 Dana & Pos' },
 ]
 
@@ -44,7 +46,7 @@ export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh,
   // saya") -- tab lain nampilin angka omset/keuangan yang server-nya juga nolak buat mereka.
   const bolehUang = roles.some(r => ROLE_UANG.includes(r.roleType))
   const tabs = (bolehUang ? HUB_TABS : HUB_TABS.filter(t => t.id === 'koperasi'))
-    .filter(t => t.id !== 'koperasi' || FITUR.koperasi)
+    .filter(t => (t.id !== 'koperasi' || FITUR.koperasi) && (t.id !== 'danatengah' || FITUR.danaTengah))
   const aktif = tabs.some(t => t.id === tab) ? tab : (bolehUang ? bawaan : 'koperasi')
 
   if (tabs.length === 0) {
@@ -72,6 +74,7 @@ export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh,
         {aktif === 'pengeluaran' && <Pengeluaran user={user} onNavigate={onNavigate} studioIdAwal={studioId} />}
         {aktif === 'forecasting' && <Forecasting user={user} onNavigate={onNavigate} />}
         {aktif === 'koperasi'    && FITUR.koperasi && <Koperasi onBadgeRefresh={onBadgeRefresh} />}
+        {aktif === 'danatengah'  && FITUR.danaTengah && <DanaTengah />}
         {aktif === 'dana'        && <DanaPos />}
       </Suspense>
       </div>

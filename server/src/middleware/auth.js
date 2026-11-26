@@ -9,6 +9,7 @@ const TULIS_TERLARANG_SAAT_MENYAMAR = [
   /^\/api\/circle\/(kas|buku|keuangan|tagihan|penjualan)(\/|\?|$)/, /^\/api\/circle\/kaizen\/target/,
   /^\/api\/circle\/orders\/[^/?]+(\?|$)/, /^\/api\/circle\/orders\/[^/]+\/(item|samakan-nilai|termin)/, /^\/api\/circle\/setoran\//,
   /^\/api\/cpm-bulanan(\/|\?|$)/, /^\/api\/circle\/ltk\/[^/]+\/(deal|konversi)/, /^\/api\/circle\/marketing\/lead\/[^/]+\/jadi-order/, /^\/api\/circle\/orders(\?|$)/,
+  /^\/api\/circle\/pemasukan(\/|\?|$)/, /^\/api\/dana-tengah(\/|\?|$)/, // Karsa Circle (26 Nov 2026)
 ]
 
 export const authenticate = (req, res, next) => {

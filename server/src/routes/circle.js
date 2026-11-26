@@ -27,6 +27,7 @@ import * as Tg from '../controllers/circleTagihan.js'
 import * as Rf from '../controllers/circleRefleksi.js'
 import * as Lb from '../controllers/circleLemburTunda.js'
 import * as Kh from '../controllers/circleKehadiran.js'
+import * as Pm from '../controllers/circlePemasukan.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
 
@@ -444,5 +445,11 @@ router.post('/impersonasi', authenticate, populateRoles, Op.mulaiImpersonasi)
 router.get('/profil-sdm', authenticate, populateRoles, Op.getProfilSdm)
 router.put('/profil-sdm', authenticate, populateRoles, Op.simpanProfilSdm)
 router.get('/manpower', authenticate, populateRoles, Op.getManpower)
+
+// Catatan pemasukan sederhana (Karsa Circle, 26 Nov 2026) — tanpa alur tahapan
+router.get('/pemasukan',            authenticate, populateRoles, Pm.daftar)
+router.post('/pemasukan',           authenticate, populateRoles, Pm.tambah)
+router.patch('/pemasukan/:id/lunas', authenticate, populateRoles, Pm.aturLunas)
+router.delete('/pemasukan/:id',     authenticate, populateRoles, Pm.hapus)
 
 export default router

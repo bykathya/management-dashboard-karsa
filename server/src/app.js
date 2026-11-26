@@ -57,6 +57,7 @@ import danaPengembanganRoutes from './routes/danaPengembangan.js'
 import circleRoutes        from './routes/circle.js'
 import ringkasanCircleRoutes from './routes/ringkasanCircle.js'
 import payrollRoutes       from './routes/payroll.js'
+import danaTengahRoutes    from './routes/danaTengah.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -169,6 +170,7 @@ app.use('/api/org-fund-reports', orgFundReportRoutes)
 app.use('/api/circle',         circleRoutes)
 app.use('/api/web-circle',     ringkasanCircleRoutes) // ringkasan web circle untuk Management Dashboard (baca saja, per wilayah)
 app.use('/api/payroll',        payrollRoutes)
+app.use('/api/dana-tengah',    danaTengahRoutes) // Karsa Circle: centang setoran bulanan tiap studio
 
 // Serve client build di production
 if (process.env.NODE_ENV === 'production') {
