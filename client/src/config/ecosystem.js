@@ -9,4 +9,5 @@ export const TELEGRAM_BOT        = 'nama_bot_anda'   // username bot Telegram (t
 // Modul yang bisa disembunyikan dari menu (kode & tabel tetap ada).
 // 21 Okt 2026: modul Produksi & Marketing Ekosistem dihapus (kerja harian ada di web circle, database yang sama).
 // Karsa Circle (26 Nov 2026): koperasi tidak dipakai -> tab, notifikasi, dan pengingatnya disembunyikan.
-export const FITUR = { payroll: true, koperasi: false }
+// Dana Tengah: centang setoran bulanan tiap studio ke circle (tab di hub Keuangan).
+export const FITUR = { payroll: true, koperasi: false, danaTengah: true }

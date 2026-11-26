@@ -2393,6 +2393,19 @@ model PengaturanInvoice {
 
 // CHECKLIST SETORAN MARKETER web circle (21 Okt 2026) — adaptasi OGS finance_v2_marketer_checklists: tiap tanggal 11 & 24 tiap marketer × unit
 // mendapat satu checklist "sudah setor pemasukan". Dibuat otomatis saat dibuka (tanpa cron). Boleh ditautkan ke TransferPendapatan.
+// DANA TENGAH (Karsa Circle, 26 Nov 2026): satu baris = studio sudah menyetor Dana Tengah untuk bulan itu (centang).
+// Centang dilepas = baris dihapus. Nominal tetap dari env DANA_TENGAH_PER_BULAN.
+model DanaTengahSetor {
+  id            String   @id @default(cuid())
+  studioId      String
+  bulan         String // YYYY-MM
+  dicentangOleh String?
+  dicentangPada DateTime @default(now())
+
+  @@unique([studioId, bulan])
+  @@index([bulan])
+}
+
 model ChecklistSetor {
   id          String   @id @default(cuid())
   studioId    String
