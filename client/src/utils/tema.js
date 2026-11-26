@@ -1,7 +1,7 @@
 // Mode tampilan aplikasi (13 Okt 2026): 'light' | 'dark', dipasang sebagai <html data-theme>.
 // Nilai awal dipasang skrip kecil di index.html SEBELUM React jalan (biar gak kedip); di sini
 // cuma baca/ubah. Pilihan diingat per perangkat (localStorage 'md-tema'); belum pernah
-// memilih = ikut setelan sistem. Warnanya sendiri: :root / :root[data-theme="light"] di
+// memilih = mode terang (Karsa). Warnanya sendiri: :root / :root[data-theme="light"] di
 // styles/index.css.
 import { useEffect, useState } from 'react'
 
