@@ -2712,3 +2712,29 @@ model MentorBayar {
 
   @@unique([mentorId, bulan])
 }
+
+// DANA TENGAH › SALDO & PEMAKAIAN (Karsa Circle, tahap 7, 26 Nov 2026): saldo rekening Dana Tengah dicatat manual (riwayat),
+// pemakaian dana dicatat per baris. Boleh dicatat Kepala Circle dan Koordinator; nama pencatat disimpan.
+model DanaTengahSaldo {
+  id        String   @id @default(cuid())
+  tanggal   DateTime @db.Date
+  jumlah    Float
+  catatan   String?
+  olehId    String?
+  olehNama  String?
+  createdAt DateTime @default(now())
+
+  @@index([tanggal])
+}
+
+model DanaTengahPakai {
+  id        String   @id @default(cuid())
+  tanggal   DateTime @db.Date
+  keperluan String
+  jumlah    Float
+  olehId    String?
+  olehNama  String?
+  createdAt DateTime @default(now())
+
+  @@index([tanggal])
+}

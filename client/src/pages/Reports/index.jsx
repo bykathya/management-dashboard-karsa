@@ -11,6 +11,8 @@ import { useAuth } from '../../context/AuthContext'
 const PembuatProgressReport = lazy(() => import('./PembuatProgressReport'))
 // Weekly Report per unit (13 Okt 2026, diadaptasi dari playgroundecos.app).
 const PembuatLaporanMingguan = lazy(() => import('./PembuatLaporanMingguan'))
+// Executive Summary bulanan (Karsa Circle, tahap 7) — Koordinator ke atas
+const PembuatExecutiveSummary = lazy(() => import('./PembuatExecutiveSummary'))
 // Raport siswa Vokasi/KBU (13 Okt 2026) -- unduh PDF; mengisinya di SDM › Raport Siswa.
 const KartuRaportSiswa = lazy(() => import('./KartuRaportSiswa'))
 
@@ -24,6 +26,7 @@ export default function Reports({ onNavigate }) {
   const { user } = useAuth()
   // Data lintas-wilayah (rekrutmen & koperasi seluruh ekosistem) hanya untuk peran di atas Koordinator;
   // Koordinator hanya mengunduh yang ada di wilayahnya (Anggota & Omset disaring server per wilayah).
+  const bisaExsum = user?.roles?.some(r => ['ADVISOR','KEPALA_EKOSISTEM','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','KOORDINATOR','PENDAMPING'].includes(r.roleType)) ?? false
   const bisaCsvEkosistem = user?.roles?.some(r => ['ADVISOR','KEPALA_EKOSISTEM','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','ADMIN_FUNGSIONAL','PENDAMPING'].includes(r.roleType)) ?? false
   // Tiap kartu punya periode sendiri-sendiri — sebelumnya berbagi satu state, jadi ganti periode
   // di satu kartu diam-diam ikut mengubah periode kartu lain yang sudah di-set duluan.
@@ -139,6 +142,12 @@ export default function Reports({ onNavigate }) {
       {errorMsg && (
         <div className="login-error" style={{ marginBottom: 20 }}>{errorMsg}</div>
       )}
+
+      {bisaExsum && <div style={{ marginBottom: 20 }}>
+        <Suspense fallback={<div className="card" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>}>
+          <PembuatExecutiveSummary />
+        </Suspense>
+      </div>}
 
       <div style={{ marginBottom: 20 }}>
         <Suspense fallback={<div className="card" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>}>

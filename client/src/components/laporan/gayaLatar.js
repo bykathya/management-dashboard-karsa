@@ -159,7 +159,8 @@ export const ISI_MINGGUAN = [
   { id: 'potensi', nama: 'Potensi Pendapatan', ikon: '📋' },
   { id: 'tim', nama: 'Team per Orang', ikon: '👥' },
 ]
-export const ISI_MINGGUAN_BAWAAN = Object.fromEntries(ISI_MINGGUAN.map(i => [i.id, true]))
+// Karsa Circle (tahap 7): halaman Potensi Pendapatan tidak dicetak secara bawaan (Karsa tidak memakai antrean order)
+export const ISI_MINGGUAN_BAWAAN = Object.fromEntries(ISI_MINGGUAN.map(i => [i.id, i.id !== 'potensi']))
 
 /** Isi laporan yang bisa dinyalakan/dimatikan pemakai. */
 export const ISI_LAPORAN = [
