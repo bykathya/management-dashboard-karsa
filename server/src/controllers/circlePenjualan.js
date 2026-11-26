@@ -41,7 +41,7 @@ export const getPenjualan = wrap(async (req, res) => {
   const dapat = p.akunAdmin ? new Set(akunSemua.map(a => a.id).filter(id => p.akunAdmin.includes(id))) : p.manajer ? new Set(akunSemua.map(a => a.id)) : new Set((await prisma.penugasanAkunMarketer.findMany({ where: { userId: req.user.id, akun: { studioId } }, select: { akunId: true } })).map(x => x.akunId))
   const akun = akunSemua.filter(a => dapat.has(a.id))
   const [orders, lap, tAkun, tUnit] = await Promise.all([
-    prisma.orderProduksi.findMany({ where: { ...ORDER_KLIEN, studioId, status: { not: 'BATAL' }, akunId: { in: [...dapat] }, tanggalMasuk: { gte: wibAwal(`${tahun}-01-01`), lt: wibAwal(`${tahun + 1}-01-01`) } }, select: { akunId: true, tanggalMasuk: true, nilaiBersih: true, nilaiKotor: true, mataUang: true, kurs: true } }),
+    prisma.orderProduksi.findMany({ where: { ...ORDER_KLIEN, studioId, status: { not: 'BATAL' }, akunId: { in: [...dapat] }, tanggalMasuk: { gte: wibAwal(`${tahun}-01-01`), lt: wibAwal(`${tahun + 1}-01-01`) } }, select: { id: true, akunId: true, tanggalMasuk: true, nilaiBersih: true, nilaiKotor: true, mataUang: true, kurs: true, kategori: true, judul: true, statusBayar: true, assignments: { where: { berhentiPada: null }, select: { namaEksternal: true, user: { select: { nama: true } } } } } }),
     prisma.weeklyReport.findMany({ where: { studioId, periodeAwal: { gte: wibAwal(`${tahun}-01-01`), lt: wibAwal(`${tahun + 1}-01-01`) } }, select: { periodeAwal: true, kurs: true } }),
     prisma.targetOmsetAkun.findMany({ where: { akunId: { in: akunSemua.map(a => a.id) }, tahun } }),
     targetUnitRows([studioId], tahun),
@@ -55,10 +55,16 @@ export const getPenjualan = wrap(async (req, res) => {
   const aktualPerTanggal = new Map(); for (const o of dalamBulan) { const t = kunciTanggalWIB(o.tanggalMasuk); aktualPerTanggal.set(t, (aktualPerTanggal.get(t) ?? 0) + usd(o)) }
   const targetBulan = targetUnitBulan(bulan)
   const periode = rincianPeriode({ periode: periodeBulan(tahun, bulan), targetBulan, aktualPerTanggal, hariIni: hari })
-  const rowAkun = akun.map(a => { const l = dalamBulan.filter(o => o.akunId === a.id), akt = r2(l.reduce((s, o) => s + usd(o), 0)), tg = targetAkunBulan(a.id, bulan); return { akunId: a.id, nama: a.namaAkun, platform: a.platform, order: l.length, aktualUsd: akt, targetUsd: tg || null, persen: tg > 0 ? Math.round((akt / tg) * 1000) / 10 : null } }).sort((x, y) => y.aktualUsd - x.aktualUsd)
+  // PROGRES OMSET (Karsa Circle, tahap 4, 26 Nov 2026): omset per akun per periode closing (= "Minggu 1, 2, …" di tampilan),
+  // plus rincian order bulan ini supaya minggu bisa diklik. Manajer unit sudah boleh melihat semua angka di endpoint ini.
+  const tglOrder = (o) => kunciTanggalWIB(o.tanggalMasuk)
+  const perPeriodeDari = (l) => periode.map(pr => r2(l.filter(o => tglOrder(o) >= pr.mulai && tglOrder(o) <= pr.akhir).reduce((s, o) => s + usd(o), 0)))
+  const rowAkun = akun.map(a => { const l = dalamBulan.filter(o => o.akunId === a.id), akt = r2(l.reduce((s, o) => s + usd(o), 0)), tg = targetAkunBulan(a.id, bulan); return { akunId: a.id, nama: a.namaAkun, platform: a.platform, order: l.length, aktualUsd: akt, perPeriode: perPeriodeDari(l), targetUsd: tg || null, persen: tg > 0 ? Math.round((akt / tg) * 1000) / 10 : null } }).sort((x, y) => y.aktualUsd - x.aktualUsd)
+  const namaAkun = new Map(akun.map(a => [a.id, a.namaAkun]))
+  const rincian = dalamBulan.map(o => ({ id: o.id, tanggal: tglOrder(o), jasa: o.kategori ?? o.judul, akun: namaAkun.get(o.akunId) ?? '—', usd: usd(o), lunas: o.statusBayar === 'LUNAS', dikerjakan: o.assignments.map(x => x.user?.nama ?? x.namaEksternal).filter(Boolean) })).sort((a, b) => a.tanggal.localeCompare(b.tanggal))
   const tahunan = Array.from({ length: 12 }, (_, i) => { const b = i + 1, akt = r2(orders.filter(o => bulanDari(o) === b).reduce((s, o) => s + usd(o), 0)), tg = targetUnitBulan(b); return { bulan: b, aktualUsd: akt, targetUsd: tg || null, persen: tg > 0 ? Math.round((akt / tg) * 1000) / 10 : null, masaDepan: `${tahun}-${String(b).padStart(2, '0')}` > hari.slice(0, 7) } })
   const aktualBulan = r2(dalamBulan.reduce((s, o) => s + usd(o), 0))
-  return res.json({ success: true, data: { studioId, tahun, bulan, kursBawaan: kursBulan[bulan - 1], lihatSemua: p.manajer, total: { aktualUsd: aktualBulan, targetUsd: targetBulan || null, persen: targetBulan > 0 ? Math.round((aktualBulan / targetBulan) * 1000) / 10 : null, order: dalamBulan.length }, periode, akun: rowAkun, tahunan, catatan: 'Omset = nilai bersih order (tanggal masuk) dalam USD; order Rupiah dikonversi dengan rata-rata kurs laporan mingguan bulan itu.' } })
+  return res.json({ success: true, data: { studioId, tahun, bulan, kursBawaan: kursBulan[bulan - 1], lihatSemua: p.manajer, total: { aktualUsd: aktualBulan, targetUsd: targetBulan || null, persen: targetBulan > 0 ? Math.round((aktualBulan / targetBulan) * 1000) / 10 : null, order: dalamBulan.length }, periode, akun: rowAkun, rincian, tahunan, catatan: 'Omset = nilai bersih order (tanggal masuk) dalam USD; order Rupiah dikonversi dengan rata-rata kurs laporan mingguan bulan itu.' } })
 })
 
 export const getTargetAkun = wrap(async (req, res) => {
