@@ -1,10 +1,11 @@
 // CATATAN PEMASUKAN (Karsa Circle, 26 Nov 2026 — keputusan pemilik): sebagian studio tidak memakai alur tahapan order
 // (brief → demo → QC → revisi → selesai). Mereka hanya mencatat PEMASUKAN: tanggal, jasa, nominal (USD), siapa yang mengerjakan.
 // Satu catatan = satu OrderProduksi yang langsung di tahap Selesai, sehingga Penjualan, Analitik, Gaji, dan laporan
-// yang membaca OrderProduksi tetap jalan tanpa diubah. Akun jualan = "Order Internal" (fee 0) → nilai bersih = nilai kotor.
+// yang membaca OrderProduksi tetap jalan tanpa diubah. Tahap 4 (26 Nov 2026): akun jualan WAJIB dipilih (aturan keras 10): akun sungguhan
+// (fee platform → nilai bersih) atau 'INTERNAL' (akun sistem "Order Internal", fee 0). Progres Omset (Penjualan) membaca akun ini.
 import prisma from '../prisma.js'
-import { studioBolehDilihat, peranStudio, pastikanTahap, akunInternal, tanggalSah } from './circle.js'
-import { ORDER_KLIEN } from '../utils/produksi.js'
+import { studioBolehDilihat, peranStudio, pastikanTahap, akunUntukOrder, tanggalSah } from './circle.js'
+import { ORDER_KLIEN, hitungNilaiBersih } from '../utils/produksi.js'
 import { validasiUsd, rupiahDariUsd, KURS_BAWAAN } from '../utils/uang.js'
 import { anggotaStudio } from '../utils/penugasanDb.js'
 import { kanonKategori, daftarKategori } from '../utils/kategori.js'
@@ -14,6 +15,7 @@ import { jenisNormal } from '../utils/alur.js'
 const gagal = (res, kode, pesan) => res.status(kode).json({ success: false, message: pesan })
 const wibAwal = (s) => new Date(s + 'T00:00:00+07:00')
 const r2 = (n) => Math.round(n * 100) / 100
+const AKUN_OTOMATIS = 'Order Internal'
 
 function rentangBulan(bulan) {
   if (!/^\d{4}-\d{2}$/.test(String(bulan ?? ''))) return null
@@ -35,20 +37,23 @@ export const daftar = async (req, res) => {
     const p = await peranStudio(req, studioId)
     if (!p.manajer) return gagal(res, 403, 'Catatan pemasukan hanya untuk Koordinator dan Admin unit')
 
-    const [orders, anggota, jasa, terakhirUsd] = await Promise.all([
+    const [orders, anggota, jasa, terakhirUsd, akunList] = await Promise.all([
       prisma.orderProduksi.findMany({
         where: { ...ORDER_KLIEN, studioId, status: { not: 'BATAL' }, tanggalMasuk: rentang },
         orderBy: [{ tanggalMasuk: 'desc' }, { createdAt: 'desc' }],
         select: { id: true, tanggalMasuk: true, kategori: true, judul: true, klien: true, nilaiKotor: true, nilaiUsd: true, kurs: true, mataUang: true, statusBayar: true,
+          akun: { select: { namaAkun: true, platform: true } },
           assignments: { where: { berhentiPada: null }, select: { userId: true, namaEksternal: true, user: { select: { nama: true } } } } },
       }),
       anggotaStudio(studioId),
       daftarKategori(studioId),
       prisma.orderProduksi.findFirst({ where: { studioId, mataUang: 'USD', kurs: { not: null } }, orderBy: { createdAt: 'desc' }, select: { kurs: true } }),
+      prisma.akunProduksi.findMany({ where: { studioId, namaAkun: { not: AKUN_OTOMATIS } }, orderBy: [{ platform: 'asc' }, { namaAkun: 'asc' }], select: { id: true, namaAkun: true, platform: true, feePersen: true } }),
     ])
 
     const baris = orders.map(o => ({
       id: o.id, tanggal: o.tanggalMasuk, jasa: o.kategori ?? o.judul, klien: o.klien,
+      akun: o.akun ? (o.akun.namaAkun === AKUN_OTOMATIS ? 'Order internal' : `${o.akun.namaAkun} · ${o.akun.platform}`) : '—',
       nilaiUsd: r2(usdDari(o)), nilaiRp: Math.round(o.nilaiKotor), lunas: o.statusBayar === 'LUNAS',
       dikerjakan: o.assignments.map(a => a.user?.nama ?? a.namaEksternal).filter(Boolean),
     }))
@@ -66,7 +71,8 @@ export const daftar = async (req, res) => {
         lunasUsd: r2(baris.filter(b => b.lunas).reduce((s, b) => s + b.nilaiUsd, 0)),
         perOrang: [...perOrang.values()].sort((a, b) => b.nilaiUsd - a.nilaiUsd),
       },
-      pilihan: { anggota: [...anggota].map(([id, nama]) => ({ id, nama })).sort((a, b) => a.nama.localeCompare(b.nama, 'id')), jasa, kursBawaan: terakhirUsd?.kurs ?? KURS_BAWAAN },
+      pilihan: { anggota: [...anggota].map(([id, nama]) => ({ id, nama })).sort((a, b) => a.nama.localeCompare(b.nama, 'id')), jasa, kursBawaan: terakhirUsd?.kurs ?? KURS_BAWAAN,
+        akun: akunList.map(a => ({ id: a.id, nama: `${a.namaAkun} · ${a.platform}`, feePersen: Math.round((a.feePersen ?? 0) * 1000) / 10 })) },
       bolehUbah: p.manajer && !p.lihatSaja,
     } })
   } catch {
@@ -74,7 +80,7 @@ export const daftar = async (req, res) => {
   }
 }
 
-// POST /api/circle/pemasukan { studioId, tanggal, jasa, nilaiUsd, kurs, talentUserId, klien?, lunas? }
+// POST /api/circle/pemasukan { studioId, tanggal, jasa, akunId ('INTERNAL' boleh), nilaiUsd, kurs, talentUserId, klien?, lunas? }
 export const tambah = async (req, res) => {
   try {
     const { studioId, tanggal, nilaiUsd, kurs, talentUserId } = req.body
@@ -89,11 +95,13 @@ export const tambah = async (req, res) => {
     const galatUsd = validasiUsd({ mataUang: 'USD', nilaiUsd, kurs }); if (galatUsd) return gagal(res, 422, galatUsd)
     if (!talentUserId) return gagal(res, 422, 'Pilih siapa yang mengerjakan')
     if (!(await anggotaStudio(studioId)).has(talentUserId)) return gagal(res, 422, 'Yang mengerjakan harus anggota studio ini')
+    const pilihAkun = await akunUntukOrder(studioId, req.body.akunId); if (pilihAkun.galat) return gagal(res, 422, pilihAkun.galat)
     const klien = String(req.body.klien ?? '').trim().slice(0, 200) || 'Klien'
     const lunas = req.body.lunas !== false
 
-    const [tahap, akun, pengguna] = await Promise.all([
-      pastikanTahap(studioId), akunInternal(studioId),
+    const akun = pilihAkun.akun
+    const [tahap, pengguna] = await Promise.all([
+      pastikanTahap(studioId),
       prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true } }),
     ])
     const selesai = tahap.find(t => jenisNormal(t.jenis) === 'SELESAI')
@@ -103,7 +111,7 @@ export const tambah = async (req, res) => {
     const order = await prisma.orderProduksi.create({
       data: {
         studioId, akunId: akun.id, tipeKlien: 'EKSTERNAL', klien, judul: jasa, kategori: jasa,
-        nilaiDisepakati: nilai, nilaiKotor: nilai, nilaiBersih: nilai,
+        nilaiDisepakati: nilai, nilaiKotor: nilai, nilaiBersih: hitungNilaiBersih(nilai, akun.feePersen),
         mataUang: 'USD', kurs: Number(kurs), nilaiUsd: Number(nilaiUsd),
         status: 'SELESAI', subStatus: selesai?.nama ?? 'Selesai', tahapId: selesai?.id ?? null,
         tanggalMasuk: waktu, tanggalSelesai: waktu,
@@ -112,7 +120,7 @@ export const tambah = async (req, res) => {
         ...(selesai ? { riwayatTahap: { create: { namaTahap: selesai.nama, jenis: 'SELESAI', userId: req.user.id, namaPengguna: pengguna?.nama ?? null } } } : {}),
       },
     })
-    await catatAudit(order.id, req.user.id, 'BUAT', [{ field: 'pemasukan', dari: null, ke: `${jasa} · USD ${nilaiUsd} × ${kurs}` }])
+    await catatAudit(order.id, req.user.id, 'BUAT', [{ field: 'pemasukan', dari: null, ke: `${jasa} · ${akun.namaAkun} · USD ${nilaiUsd} × ${kurs}` }])
     return res.status(201).json({ success: true, data: { id: order.id } })
   } catch {
     return gagal(res, 500, 'Gagal mencatat pemasukan')
