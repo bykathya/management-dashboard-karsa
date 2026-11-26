@@ -45,6 +45,7 @@ export const buatAkunJualan = async (req, res) => {
     if (!(await manajer(req, res, studioId, { tulis: 'pengelola' }))) return
     const { galat, data } = bersihkan(req.body, { baru: true })
     if (galat) return gagal(res, 422, galat)
+    if (data.feePersen === undefined) data.feePersen = 0 // Karsa Circle (26 Nov 2026): potongan platform bawaan 0%, diisi hanya untuk akun yang memang dipotong
     if (await prisma.akunProduksi.findUnique({ where: { studioId_namaAkun: { studioId, namaAkun: data.namaAkun } } })) return gagal(res, 409, 'Akun dengan nama itu sudah ada di studio ini')
     const a = await prisma.akunProduksi.create({ data: { studioId, ...data } })
     return res.status(201).json({ success: true, data: rapi(a) })
