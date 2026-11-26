@@ -3,6 +3,7 @@ import { NAV, ICONS } from '../layout/Sidebar'
 import api from '../../services/api'
 import { getRoleLabel, getHighestRole, getRoleOrgUnit, ROLE_UANG } from '../../utils/roles'
 import { alfa } from '../../utils/warna'
+import { FITUR } from '../../config/ecosystem'
 
 const EXTRA = [
   { id: 'Profile', label: 'Profil Saya', section: 'Lainnya' },
@@ -10,7 +11,7 @@ const EXTRA = [
   // onNavigate('WeeklyReport'/'Koperasi') dialihkan ke tab-nya di App.jsx. roles = siapa yang
   // boleh lihat tab itu (Koperasi terbuka untuk semua).
   { id: 'WeeklyReport', label: 'Laporan Omset', section: 'Keuangan', roles: ROLE_UANG },
-  { id: 'Koperasi',     label: 'Koperasi',      section: 'Keuangan' },
+  ...(FITUR.koperasi ? [{ id: 'Koperasi', label: 'Koperasi', section: 'Keuangan' }] : []),
   // Sudah jadi tab hub SDM -- dialihkan di App.jsx.
   { id: 'Members',   label: 'Anggota',        section: 'SDM' },
   { id: 'Kader',     label: 'Performa Kader', section: 'SDM', roles: ['ADVISOR','KOORDINATOR','PENDAMPING','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','KEPALA_EKOSISTEM'] },

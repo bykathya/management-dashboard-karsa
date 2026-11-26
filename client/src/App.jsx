@@ -5,6 +5,7 @@ import LoginPage from './pages/Auth/LoginPage'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import CommandPalette from './components/common/CommandPalette'
+import { FITUR } from './config/ecosystem'
 
 const Dashboard        = lazy(() => import('./pages/Dashboard/index'))
 const WeeklyReport     = lazy(() => import('./pages/WeeklyReport/index'))
@@ -119,7 +120,7 @@ function useBadges(user) {
     const updates = {}
 
     // Koperasi: setoran menunggu konfirmasi (admin only)
-    if (isAdminKoperasi) {
+    if (isAdminKoperasi && FITUR.koperasi) {
       try {
         const res = await api.get('/api/koperasi/badge')
         updates.Koperasi = res.data.data.menunggu || null

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { FITUR } from '../../config/ecosystem'
 
 const PAGE_TITLES = {
   Dashboard:    'Dashboard',
@@ -45,7 +46,7 @@ export default function Topbar({ title, user, onLogout, onProfile, onMenuOpen, o
     return () => document.removeEventListener('pointerdown', handler)
   }, [showNotif])
 
-  const koperasiCount    = badges.Koperasi     ?? 0
+  const koperasiCount    = FITUR.koperasi ? (badges.Koperasi ?? 0) : 0
   const weeklyCount      = badges.WeeklyReport ?? 0
   const rekrutmenCount   = badges.Rekrutmen    ?? 0
   const totalNotif       = koperasiCount + weeklyCount + rekrutmenCount
