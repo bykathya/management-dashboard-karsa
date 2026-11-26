@@ -27,6 +27,7 @@ import * as Tg from '../controllers/circleTagihan.js'
 import * as Rf from '../controllers/circleRefleksi.js'
 import * as Lb from '../controllers/circleLemburTunda.js'
 import * as Kh from '../controllers/circleKehadiran.js'
+import * as Jd from '../controllers/circleJadwal.js'
 import * as Pm from '../controllers/circlePemasukan.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
@@ -445,6 +446,12 @@ router.post('/impersonasi', authenticate, populateRoles, Op.mulaiImpersonasi)
 router.get('/profil-sdm', authenticate, populateRoles, Op.getProfilSdm)
 router.put('/profil-sdm', authenticate, populateRoles, Op.simpanProfilSdm)
 router.get('/manpower', authenticate, populateRoles, Op.getManpower)
+
+// Jadwal rutin Arus Kas (Karsa Circle, tahap 5, 26 Nov 2026)
+router.get('/jadwal',              authenticate, populateRoles, Jd.daftar)
+router.post('/jadwal',             authenticate, populateRoles, Jd.tambah)
+router.delete('/jadwal/:id',       authenticate, populateRoles, Jd.hapus)
+router.put('/jadwal/:id/centang',  authenticate, populateRoles, Jd.centang)
 
 // Catatan pemasukan sederhana (Karsa Circle, 26 Nov 2026) — tanpa alur tahapan
 router.get('/pemasukan',            authenticate, populateRoles, Pm.daftar)

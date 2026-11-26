@@ -2643,3 +2643,29 @@ model KolomKhususOrder {
 
   @@index([studioId, aktif])
 }
+
+// JADWAL RUTIN ARUS KAS (Karsa Circle, tahap 5, 26 Nov 2026): daftar hal yang rutin dikerjakan tiap bulan per studio
+// (mis. tgl 1 bayar langganan, tgl 25 transfer gaji), dicentang per bulan. Tidak memuat angka uang.
+model JadwalRutin {
+  id        String          @id @default(cuid())
+  studioId  String
+  hari      Int // tanggal dalam bulan, 1–31 (bulan yang lebih pendek: dianggap hari terakhir)
+  tugas     String
+  aktif     Boolean         @default(true)
+  dibuatOleh String?
+  createdAt DateTime        @default(now())
+  centang   JadwalCentang[]
+
+  @@index([studioId, aktif])
+}
+
+model JadwalCentang {
+  id        String      @id @default(cuid())
+  jadwalId  String
+  jadwal    JadwalRutin @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  bulan     String // YYYY-MM
+  oleh      String?
+  pada      DateTime    @default(now())
+
+  @@unique([jadwalId, bulan])
+}
