@@ -33,6 +33,8 @@ export const NAV = [
       { id: 'Dashboard',   label: 'Overview' },
       { id: 'DetailKas',   label: 'Detail Kas + Ekuitas', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'PENDAMPING', 'KOORDINATOR'] },
       { id: 'Forecasting', label: 'Financial Forecasting', roles: ROLE_FF },
+      { id: 'LaporanMingguan', label: 'Weekly Report', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'PENDAMPING', 'KOORDINATOR'] },
+      { id: 'LaporanBulanan',  label: 'Monthly Report', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'PENDAMPING', 'KOORDINATOR'] },
     ],
   },
   {
@@ -87,6 +89,8 @@ export const ICONS = {
   get SDM() { return this.Members },
   get Forecasting() { return this.Finance },
   get DetailKas() { return this.Finance },
+  get LaporanMingguan() { return this.Reports },
+  get LaporanBulanan() { return this.Reports },
   Panduan: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>
