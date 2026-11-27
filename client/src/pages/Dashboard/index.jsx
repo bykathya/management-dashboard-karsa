@@ -247,10 +247,11 @@ function FinancialSummary({ onNavigate }) {
   const dpEquityRp = dpEquityUsd * dpKurs
 
   const stats = data ? [
-    { label: 'Kas Usaha',            value: formatRp(data.totalKas),           bg: '#EA580C', sub: 'kas seluruh studio', ke: ['Finance', { tab: 'forecasting' }] },
+    { label: 'Kas Usaha',            value: formatRp(data.totalKas),           bg: '#EA580C', sub: 'kas seluruh studio', ke: ['Forecasting'] },
     { label: 'Dana di Luar Kas',      value: formatRp(data.totalEkuitas),        bg: 'var(--accent)', sub: 'dana di luar kas per studio', ke: ['Finance', { tab: 'bulanan' }] },
-    { label: 'Total Dana Usaha',     value: formatRp(data.totalEkuitasUsaha),   bg: 'var(--green)', sub: 'kas + dana di luar kas', ke: ['Finance', { tab: 'forecasting' }] },
-    { label: 'Total CPM',            value: formatRp(data.totalCpm),            bg: 'var(--pink)', sub: 'CPM seluruh studio', ke: ['Finance', { tab: 'forecasting' }] },
+    { label: 'Total Dana Usaha',     value: formatRp(data.totalEkuitasUsaha),   bg: 'var(--green)', sub: 'kas + dana di luar kas', ke: ['Forecasting'] },
+    { label: 'Total CPM',            value: formatRp(data.totalCpm),            bg: 'var(--pink)', sub: 'biaya rutin per bulan seluruh studio', ke: ['Forecasting'] },
+    { label: 'Runway',               value: `${fmtBln(data.runway)}`,           bg: 'var(--accent)', sub: 'kas + dana di luar kas cukup untuk berapa bulan', ke: ['Forecasting'] },
     { label: 'Dana PE',          value: formatRp(data.danaPE),         bg: '#0D9488', sub: 'dana Private Equity', ke: ['Finance', { tab: 'dana' }] },
     { label: 'Total Dana + PE', value: formatRp(data.totalEkuitasPE), bg: '#1D4ED8', sub: 'dana usaha + dana PE', ke: ['Finance', { tab: 'dana' }] },
     ...(isPengelolaDana && dpUnits ? [
@@ -323,6 +324,58 @@ function FinancialSummary({ onNavigate }) {
           ))}
         </div>
       )}
+      {!loading && data?.perStudio?.length > 0 && <TabelRunway rows={data.perStudio} total={data} onNavigate={onNavigate} />}
+    </div>
+  )
+}
+
+// ── Posisi Kas + Ekuitas & CPM per studio (Karsa, 27 Nov 2026) ─────────────
+// Runway = (kas + dana di luar kas) / CPM bulanan. Angka di luar wilayah peran = null → "—".
+const fmtBln = (r) => (r == null ? '—' : `${(Math.round(r * 10) / 10).toLocaleString('id-ID', { minimumFractionDigits: 1 })} bln`)
+function warnaRunway(r) {
+  if (r == null) return { background: 'var(--bg-surface)', color: 'var(--text-muted)' }
+  if (r >= 6) return { background: 'var(--accent)', color: 'var(--on-accent)' }
+  if (r >= 3) return { background: 'var(--amber-subtle)', color: 'var(--text)' }
+  return { background: 'var(--pink-candy)', color: 'var(--on-pink)' }
+}
+function PilRunway({ r }) {
+  return <span style={{ ...warnaRunway(r), display: 'inline-block', padding: '3px 12px', borderRadius: 'var(--pill)', border: '1.5px solid var(--line)', fontWeight: 700, fontSize: 12.5, whiteSpace: 'nowrap' }}>{fmtBln(r)}</span>
+}
+function TabelRunway({ rows, total, onNavigate }) {
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-judul)', fontWeight: 600, fontSize: 15 }}>Posisi Kas + Ekuitas Usaha &amp; CPM Bulanan</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Kas + Ekuitas = kas rekening + dana di luar kas · Runway = kas cukup untuk berapa bulan</div>
+        </div>
+        {onNavigate && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('Forecasting')}>Detail CPM →</button>}
+      </div>
+      <div className="table-wrap" style={{ overflowX: 'auto' }}>
+        <table className="table">
+          <thead><tr><th>Studio</th><th>Koordinator</th><th style={{ textAlign: 'right' }}>Kas + Ekuitas</th><th style={{ textAlign: 'right' }}>CPM (biaya bulanan)</th><th style={{ textAlign: 'right' }}>Runway</th></tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.studioId}>
+                <td style={{ fontWeight: 600 }}>{r.nama}</td>
+                <td>{r.koordinator ?? '—'}</td>
+                <td style={{ textAlign: 'right' }}>{formatRp(r.kasEkuitas)}</td>
+                <td style={{ textAlign: 'right' }}>{formatRp(r.cpm)}</td>
+                <td style={{ textAlign: 'right' }}><PilRunway r={r.runway} /></td>
+              </tr>
+            ))}
+            <tr style={{ fontWeight: 700 }}>
+              <td>Total</td><td />
+              <td style={{ textAlign: 'right' }}>{formatRp(total.totalEkuitasUsaha)}</td>
+              <td style={{ textAlign: 'right' }}>{formatRp(total.totalCpm)}</td>
+              <td style={{ textAlign: 'right' }}><PilRunway r={total.runway} /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 10, fontSize: 12, color: 'var(--text-secondary)', alignItems: 'center' }}>
+        <b>Runway:</b><PilRunway r={6} /> aman (6 bln ke atas) <PilRunway r={4} /> perlu dijaga (3–6 bln) <PilRunway r={1} /> waspada (di bawah 3 bln)
+      </div>
     </div>
   )
 }

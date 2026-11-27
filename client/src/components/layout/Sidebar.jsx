@@ -1,6 +1,6 @@
 import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL, FITUR } from '../../config/ecosystem'
 import { onActivate } from '../../utils/a11y'
-import { ROLE_UANG } from '../../utils/roles'
+import { ROLE_UANG, ROLE_FF } from '../../utils/roles'
 import { useTema } from '../../utils/tema'
 
 // Saklar Mode gelap / terang (13 Okt 2026) -- pola playgroundecos.app, di atas kartu pengguna.
@@ -25,10 +25,19 @@ export const NAV = [
     ],
   },
   {
+    // Executive (Karsa, 27 Nov 2026, pola web Mas Zakin): Leaderboard di atas, lalu Overview, lalu
+    // Financial Forecasting (Koordinator ke atas saja). Id lama (Performance/Dashboard) tetap.
+    section: 'Executive',
+    items: [
+      { id: 'Performance', label: 'Leaderboard', roles: ROLE_UANG },
+      { id: 'Dashboard',   label: 'Overview' },
+      { id: 'Forecasting', label: 'Financial Forecasting', roles: ROLE_FF },
+    ],
+  },
+  {
     section: 'Ringkasan',
     items: [
       { id: 'Panduan',      label: 'Mulai dari Sini' },
-      { id: 'Dashboard',    label: 'Dashboard'     },
       // Ringkasan web circle semua unit (14 Nov 2026): Koordinator ke atas, isi per wilayah — samain checkMinRole('KOORDINATOR') di routes/ringkasanCircle.js
       { id: 'WebCircle',    label: 'Web Circle', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL', 'PENDAMPING', 'KOORDINATOR'] },
       { id: 'Calendar',     label: 'Kalender'      },
@@ -56,7 +65,6 @@ export const NAV = [
       // Unit Usaha (Bio Studio) bukan buat KADER/KARYAWAN/MAGANG -- gate lama section 'Admin'.
       { id: 'MasterData',  label: 'Unit', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL', 'PENDAMPING', 'KOORDINATOR'] },
       // Angka omset/keuangan mentah -- KADER ke atas, samain checkMinRole('KADER') di server.
-      { id: 'Performance', label: 'Performa',      roles: ROLE_UANG },
       { id: 'Reports',     label: 'Unduh Laporan', roles: ROLE_UANG },
     ],
   },
@@ -76,6 +84,7 @@ export const NAV = [
 
 export const ICONS = {
   get SDM() { return this.Members },
+  get Forecasting() { return this.Finance },
   Panduan: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>

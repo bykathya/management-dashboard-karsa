@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { FITUR } from '../../config/ecosystem'
 
 const PAGE_TITLES = {
-  Dashboard:    'Dashboard',
+  Dashboard:    'Overview',
+  Forecasting:  'Financial Forecasting',
   WeeklyReport: 'Laporan Omset',
   Finance:      'Keuangan',
   SDM:          'SDM',
@@ -12,7 +13,7 @@ const PAGE_TITLES = {
   Koperasi:     'Koperasi',
   Payroll:      'Payroll',
   Kader:        'Performa Kader',
-  Performance:  'Performa',
+  Performance:  'Leaderboard',
   WebCircle:    'Web Circle',
   Goals:        'Goals & Roadmap',
   Asset:        'Aset & Inventaris',

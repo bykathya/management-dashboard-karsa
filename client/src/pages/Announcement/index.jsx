@@ -32,7 +32,7 @@ const CHECKLIST_KOORDINATOR = [
     icon: '💰',
     judul: 'Update Saldo Rekening',
     desc: 'Perbarui saldo Rekening Bank studio kalau berubah — kas di laporan & dashboard ikut otomatis',
-    page: 'Finance', params: { tab: 'forecasting' },
+    page: 'Forecasting', params: {},
     warna: '#EA580C',
   },
   {
@@ -107,7 +107,7 @@ const CHECKLIST_MINGGUAN = [
     icon: '💰',
     judul: 'Update Saldo Rekening',
     desc: 'Kalau saldo bank berubah, perbarui lewat tombol Update Kas di Financial Forecasting',
-    page: 'Finance', params: { tab: 'forecasting' },
+    page: 'Forecasting', params: {},
     warna: '#EA580C',
   },
   {
