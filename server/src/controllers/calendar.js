@@ -1,4 +1,5 @@
 import prisma from '../prisma.js'
+import { acaraPadaTanggal } from '../utils/kehadiran.js'
 
 
 export const getEvents = async (req, res) => {
@@ -113,10 +114,31 @@ export const getEvents = async (req, res) => {
         detail: `${uMap[k.userId] ?? '—'} · ${k.deskripsi.slice(0, 50)}`,
         color: '#06b6d4',
       })),
+      ...(await eventKarsa(b, t)),
     ].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal))
 
     return res.json({ success: true, data: events, bulan: b, tahun: t })
   } catch {
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan, coba lagi' })
   }
+}
+
+// Kalender bersama (Karsa, 27 Nov 2026): postingan Info & Dokumen berjenis Event, acara kalender web kerja harian (termasuk yang berulang),
+// dan hari libur kerja ikut tampil di Kalender web pusat.
+async function eventKarsa(b, t) {
+  const pad = (n) => String(n).padStart(2, '0')
+  const awal = `${t}-${pad(b)}-01`, akhir = new Date(Date.UTC(t, b, 0)).toISOString().slice(0, 10)
+  const tgl = (s) => new Date(s + 'T00:00:00.000Z')
+  const [info, acara, libur] = await Promise.all([
+    prisma.announcement.findMany({ where: { jenis: 'EVENT', tanggalEvent: { gte: tgl(awal), lte: tgl(akhir) } } }),
+    prisma.acaraKalender.findMany({ where: { tanggal: { lte: tgl(akhir) } } }),
+    prisma.hariLiburKerja.findMany({ where: { tanggal: { gte: tgl(awal), lte: tgl(akhir) } } }),
+  ])
+  const hasil = info.map(a => ({ id: `info-${a.id}`, tanggal: a.tanggalEvent, tipe: 'EVENT', judul: a.judul, detail: [a.jamEvent, a.konten?.slice(0, 80)].filter(Boolean).join(' · '), tautan: a.tautan, color: '#f6a8e8' }))
+  for (let d = tgl(awal); d <= tgl(akhir); d = new Date(d.getTime() + 86400000)) {
+    const k = d.toISOString().slice(0, 10)
+    for (const a of acara) if (acaraPadaTanggal(a, k)) hasil.push({ id: `acara-${a.id}-${k}`, tanggal: d, tipe: 'EVENT', judul: a.judul, detail: [a.mulai, a.lokasi].filter(Boolean).join(' · ') || 'Acara web kerja harian', color: '#f6a8e8' })
+  }
+  for (const l of libur) hasil.push({ id: `libur-${l.id}`, tanggal: l.tanggal, tipe: 'LIBUR', judul: l.nama ?? 'Hari libur', detail: l.jenis === 'WFA' ? 'Kerja dari mana saja' : 'Hari libur kerja', color: '#111111' })
+  return hasil
 }

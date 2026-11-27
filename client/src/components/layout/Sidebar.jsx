@@ -47,7 +47,7 @@ export const NAV = [
       // Kepatuhan lapor omset per STUDIO/circle -- bukan untuk Karyawan/Magang (temuan trial 22 Okt 2026:
       // anak magang melihat data circle). Samain checkMinRole('KADER') di routes/health.js.
       { id: 'Health',       label: 'Kepatuhan Laporan', roles: ROLE_UANG },
-      { id: 'Announcement', label: 'Pengumuman'    },
+      { id: 'Announcement', label: 'Info & Dokumen' },
     ],
   },
   {

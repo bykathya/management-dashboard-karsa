@@ -302,14 +302,21 @@ function avatarColor(nama) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
-export default function Announcement({ onNavigate }) {
+const JENIS_INFO = { SEMUA: 'Semua', PENGUMUMAN: 'Pengumuman', EVENT: 'Event', KONTRAK: 'Kontrak', DOKUMEN: 'Dokumen & Drive' }
+const JENIS_WARNA = { PENGUMUMAN: 'var(--accent)', EVENT: 'var(--pink-candy)', KONTRAK: 'var(--amber-subtle)', DOKUMEN: 'var(--cyan-subtle)' }
+
+export default function Announcement({ onNavigate, buat }) {
   const { user } = useAuth()
   const { data, loading, error, refetch } = useApi('/api/announcements?limit=50')
   const { data: circles } = useApi('/api/masterdata/circles')
   const { data: rumahUsahaList } = useApi('/api/masterdata/rumah-usaha')
   const { data: studios } = useApi('/api/masterdata/studios')
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ judul: '', konten: '', targetTipe: 'ALL', targetId: '', kirimTelegram: false })
+  const [showForm, setShowForm] = useState(!!buat)
+  const KOSONG = { jenis: 'PENGUMUMAN', judul: '', konten: '', tautan: '', tanggalEvent: '', jamEvent: '', targetTipe: 'ALL', targetId: '', kirimTelegram: false }
+  const [form, setForm] = useState(buat && JENIS_INFO[buat] ? { ...KOSONG, jenis: buat } : KOSONG)
+  // Info & Dokumen (Karsa, 27 Nov 2026): saring per jenis + cari
+  const [tab, setTab] = useState('SEMUA'), [cari, setCari] = useState('')
+  const tampil = (data ?? []).filter(a => (tab === 'SEMUA' || (a.jenis ?? 'PENGUMUMAN') === tab) && (!cari || `${a.judul} ${a.konten} ${a.tautan ?? ''}`.toLowerCase().includes(cari.toLowerCase())))
   const [submitting, setSubmit] = useState(false)
   const [msg, setMsg] = useState(null)
 
@@ -322,12 +329,12 @@ export default function Announcement({ onNavigate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.judul.trim() || !form.konten.trim()) return
+    if (!form.judul.trim()) return
     setSubmit(true); setMsg(null)
     try {
       const res = await api.post('/api/announcements', form)
       setMsg({ type: 'success', text: res.data.message ?? 'Pengumuman berhasil dipublikasikan!' })
-      setForm({ judul: '', konten: '', targetTipe: 'ALL', kirimTelegram: false })
+      setForm(KOSONG)
       setShowForm(false)
       refetch()
     } catch (err) {
@@ -350,15 +357,15 @@ export default function Announcement({ onNavigate }) {
       <div className="page-header" style={{ marginBottom: 20 }}>
         <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1>Pengumuman</h1>
-            <p>Informasi & update untuk seluruh ekosistem {ECOSYSTEM_NAME}</p>
+            <h1>Info & Dokumen</h1>
+            <p>Pusat pengumuman resmi, jadwal event, kontrak, tautan Google Drive, dan dokumen kerja {ECOSYSTEM_NAME}. Postingan tampil juga di web kerja harian (menu Info & Kalender) untuk anggota yang dituju; postingan berjenis Event masuk ke Kalender.</p>
           </div>
           {canPost && (
             <button className="btn btn-primary" onClick={() => { setShowForm(v => !v); setMsg(null) }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              {showForm ? 'Tutup' : 'Buat Pengumuman'}
+              {showForm ? 'Tutup' : 'Buat Postingan'}
             </button>
           )}
         </div>
@@ -368,7 +375,7 @@ export default function Announcement({ onNavigate }) {
       {showForm && (
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">
-            <span className="card-title">Buat Pengumuman Baru</span>
+            <span className="card-title">Buat postingan baru</span>
           </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div className="form-group">
@@ -436,6 +443,15 @@ export default function Announcement({ onNavigate }) {
             </div>
 
             <div className="form-group">
+              <label className="form-label">Jenis</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {Object.entries(JENIS_INFO).filter(([k]) => k !== 'SEMUA').map(([k, v]) => (
+                  <button key={k} type="button" className={`btn ${form.jenis === k ? 'btn-primary' : 'btn-ghost'}`} style={{ fontSize: 12, padding: '6px 14px' }} onClick={() => setForm(f => ({ ...f, jenis: k }))}>{v}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-group">
               <label className="form-label">Judul *</label>
               <input className="form-input" style={{ paddingLeft: 14 }}
                 placeholder="Judul pengumuman..."
@@ -443,12 +459,27 @@ export default function Announcement({ onNavigate }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Isi Pengumuman *</label>
+              <label className="form-label">Isi {form.jenis === 'DOKUMEN' || form.jenis === 'EVENT' ? '(boleh kosong)' : '*'}</label>
               <textarea className="form-input"
-                style={{ paddingLeft: 14, paddingTop: 10, minHeight: 120, resize: 'vertical' }}
-                placeholder="Tulis pengumuman di sini..."
-                value={form.konten} onChange={e => setForm(f => ({ ...f, konten: e.target.value }))} required />
+                style={{ paddingLeft: 14, paddingTop: 10, minHeight: 110, resize: 'vertical' }}
+                placeholder={form.jenis === 'EVENT' ? 'Keterangan acara, tempat, atau yang perlu disiapkan…' : 'Tulis isinya di sini…'}
+                value={form.konten} onChange={e => setForm(f => ({ ...f, konten: e.target.value }))} required={form.jenis === 'PENGUMUMAN'} />
             </div>
+
+            <div className="form-group">
+              <label className="form-label">Tautan (Google Drive, dokumen) {form.jenis === 'DOKUMEN' || form.jenis === 'KONTRAK' ? '' : '— opsional'}</label>
+              <input className="form-input" style={{ paddingLeft: 14 }} type="url" placeholder="https://drive.google.com/…"
+                value={form.tautan} onChange={e => setForm(f => ({ ...f, tautan: e.target.value }))} required={form.jenis === 'DOKUMEN'} />
+            </div>
+
+            {form.jenis === 'EVENT' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+                <div className="form-group"><label className="form-label">Tanggal event *</label>
+                  <input className="form-input" style={{ paddingLeft: 14 }} type="date" value={form.tanggalEvent} onChange={e => setForm(f => ({ ...f, tanggalEvent: e.target.value }))} required /></div>
+                <div className="form-group"><label className="form-label">Jam (opsional)</label>
+                  <input className="form-input" style={{ paddingLeft: 14 }} placeholder="mis. 19.00 WIB" value={form.jamEvent} onChange={e => setForm(f => ({ ...f, jamEvent: e.target.value }))} /></div>
+              </div>
+            )}
 
             {/* Toggle Telegram */}
             <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
@@ -512,14 +543,22 @@ export default function Announcement({ onNavigate }) {
           <div className="spinner" style={{ width: 24, height: 24, margin: '0 auto 12px' }} />
           Memuat pengumuman...
         </div>
-      ) : data?.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--text-muted)' }}>
+      ) : (<>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+          {Object.entries(JENIS_INFO).map(([k, v]) => (
+            <button key={k} type="button" className={`btn btn-sm ${tab === k ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab(k)}>{v}{k === 'SEMUA' ? ` (${data?.length ?? 0})` : ''}</button>
+          ))}
+          <input className="form-input" style={{ paddingLeft: 12, flex: '1 1 220px', minWidth: 0 }} placeholder="Cari pengumuman, kontrak, tautan Drive…" value={cari} onChange={e => setCari(e.target.value)} aria-label="Cari postingan" />
+        </div>
+        {tampil.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '56px 0', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>Belum ada pengumuman</div>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Belum ada info atau dokumen{data?.length ? ' yang cocok' : ''}</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>Klik "Buat Postingan" untuk membagikan pengumuman, jadwal event, kontrak, atau tautan Drive.</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {data?.map(a => (
+          {tampil.map(a => (
             <div key={a.id} className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <div style={{
@@ -557,15 +596,21 @@ export default function Announcement({ onNavigate }) {
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
                     {a.namaPembuat} · {formatTanggal(a.createdAt)}
                   </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                    {a.konten}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: a.konten ? 8 : 0 }}>
+                    <span className="ff-chip" style={{ fontSize: 11.5, padding: '2px 10px', background: JENIS_WARNA[a.jenis ?? 'PENGUMUMAN'] }}>{JENIS_INFO[a.jenis ?? 'PENGUMUMAN']}</span>
+                    {a.tanggalEvent && <span style={{ fontSize: 12.5, fontWeight: 600 }}>📅 {new Date(a.tanggalEvent).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}{a.jamEvent ? ` · ${a.jamEvent}` : ''}</span>}
+                    {a.tautan && <a href={a.tautan} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Buka tautan →</a>}
                   </div>
+                  {a.konten && <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                    {a.konten}
+                  </div>}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+      </>)}
     </>
   )
 }

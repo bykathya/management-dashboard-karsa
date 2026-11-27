@@ -12,6 +12,9 @@ const TIPE_CONFIG = {
   DEADLINE_GOAL:     { label: 'Deadline Goal',       icon: '🎯', bg: 'color-mix(in srgb, var(--accent) 15%, transparent)',  color: 'var(--accent)' },
   REKRUTMEN:         { label: 'Rekrutmen',           icon: '👤', bg: 'rgba(234,88,12,0.15)',   color: '#EA580C' },
   EVENT_KADER:       { label: 'Event Kader',         icon: '📝', bg: 'color-mix(in srgb, var(--cyan) 15%, transparent)',   color: 'var(--cyan)' },
+  // Karsa (27 Nov 2026): event dari Info & Dokumen dan acara web kerja harian, serta hari libur kerja
+  EVENT:             { label: 'Event',               icon: '📣', bg: 'var(--pink-subtle)', color: 'var(--text)' },
+  LIBUR:             { label: 'Hari libur',          icon: '🏖️', bg: 'var(--hover-strong)', color: 'var(--text)' },
 }
 
 function getDaysInMonth(bulan, tahun) {
@@ -71,7 +74,7 @@ function getFirstDayOfMonth(bulan, tahun) {
   return d === 0 ? 6 : d - 1 // Monday = 0
 }
 
-export default function Calendar() {
+export default function Calendar({ onNavigate }) {
   const now = new Date()
   const isMobile = useIsMobile()
   const [bulan, setBulan] = useState(now.getMonth() + 1)
@@ -130,8 +133,9 @@ export default function Calendar() {
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Kalender Ekosistem</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-            Deadline, laporan, event, dan milestone {ECOSYSTEM_NAME}
+            Deadline, event, hari libur, dan ulang tahun {ECOSYSTEM_NAME}. Event dari Info & Dokumen dan acara web kerja harian otomatis masuk ke sini.
           </p>
+          {onNavigate && <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 8 }} onClick={() => onNavigate('Announcement', { buat: 'EVENT' })}>+ Tambah event</button>}
         </div>
 
         {/* Nav bulan */}
