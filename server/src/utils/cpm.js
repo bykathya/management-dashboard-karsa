@@ -9,8 +9,25 @@ import prisma from '../prisma.js'
 //         Kosong" ke total, bukan cuma porsi yang sudah ada pemiliknya)
 // Bulk (bukan N+1 per studio) supaya aman dipakai di Dashboard/Laporan Bulanan yang nampilin
 // banyak studio sekaligus.
+// Financial Forecasting baru (27 Nov 2026): bila studio sudah mengisi estimasi pengeluaran bulan itu, CPM = total estimasi
+// (sumber 'ff'); bila belum, tetap hitungan otomatis di bawah.
+export async function totalFfStudios(studioIds, bulan, tahun) {
+  if (!studioIds.length) return {}
+  const rows = await prisma.ffItem.groupBy({ by: ['studioId'], where: { studioId: { in: studioIds }, bulan, tahun }, _sum: { rupiah: true }, _count: { _all: true } })
+  return Object.fromEntries(rows.filter(r => r._count._all > 0).map(r => [r.studioId, r._sum.rupiah ?? 0]))
+}
+function timpaFf(result, ff) {
+  for (const [id, total] of Object.entries(ff)) if (result[id]) result[id] = { ...result[id], totalCpm: total, sumber: 'ff' }
+  return result
+}
+
 export async function getCpmMapForStudios(studioIds) {
   if (studioIds.length === 0) return {}
+  const kini = bulanIniWIB()
+  return timpaFf(await cpmOtomatis(studioIds), await totalFfStudios(studioIds, kini.bulan, kini.tahun))
+}
+
+async function cpmOtomatis(studioIds) {
 
   const [thpRows, pengeluaranRows, studios] = await Promise.all([
     prisma.userRole.groupBy({
@@ -84,11 +101,12 @@ export function bulanIniWIB() {
 }
 
 export async function getCpmMapForStudiosBulan(studioIds, bulan, tahun) {
-  const live = await getCpmMapForStudios(studioIds)
+  const live = timpaFf(await cpmOtomatis(studioIds), await totalFfStudios(studioIds, bulan, tahun))
   const kini = bulanIniWIB()
   if (studioIds.length === 0 || tahun * 12 + bulan >= kini.tahun * 12 + kini.bulan) return live
   const fotos = await prisma.studioCpmBulanan.findMany({ where: { studioId: { in: studioIds }, bulan, tahun } })
   for (const f of fotos) {
+    if (live[f.studioId]?.sumber === 'ff') continue // estimasi FF bulan itu lebih diutamakan dari foto otomatis
     live[f.studioId] = {
       totalThp: f.totalThp, jumlahOrang: f.jumlahOrang, totalPengeluaranRutin: f.totalPengeluaranRutin,
       totalShu: f.totalShu, totalCpm: f.totalCpm, tersimpan: true,

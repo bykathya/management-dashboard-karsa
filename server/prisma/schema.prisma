@@ -2837,3 +2837,39 @@ model BuktiKas {
 
   @@index([studioId])
 }
+
+// FINANCIAL FORECASTING baru (Karsa, 27 Nov 2026): estimasi pengeluaran bulanan per studio, per kategori → pos.
+// Kategori jenis TIM berisi pos per orang (userId terisi, disinkronkan dari HR). Total bulan itu = CPM di Overview & Runway
+// (menggantikan hitungan otomatis THP + pengeluaran rutin + SHU bila studio sudah mengisi estimasi bulan itu).
+model FfKategori {
+  id        String   @id @default(cuid())
+  studioId  String
+  tahun     Int
+  bulan     Int
+  nama      String
+  jenis     String   @default("BIASA") // BIASA | TIM
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now())
+  item      FfItem[]
+
+  @@index([studioId, tahun, bulan])
+}
+
+model FfItem {
+  id         String     @id @default(cuid())
+  kategoriId String
+  kategori   FfKategori @relation(fields: [kategoriId], references: [id], onDelete: Cascade)
+  studioId   String
+  tahun      Int
+  bulan      Int
+  userId     String?
+  nama       String
+  rupiah     Float      @default(0)
+  lunas      Boolean    @default(false)
+  urutan     Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([studioId, tahun, bulan])
+  @@index([kategoriId])
+}
