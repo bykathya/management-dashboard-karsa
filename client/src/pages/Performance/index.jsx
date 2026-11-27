@@ -4,6 +4,7 @@ import { formatUSD, formatRp, getBulanLabel } from '../../utils/format'
 import { alfa } from '../../utils/warna'
 import BadgeKolaborasi from '../../components/common/BadgeKolaborasi'
 import ItemRingkas from '../../components/common/ItemRingkas'
+import Leaderboard from './Leaderboard'
 
 const NOW    = new Date()
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
@@ -121,8 +122,8 @@ export default function Performance() {
       <div className="page-header" style={{ marginBottom: 16 }}>
         <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1>Performa</h1>
-            <p>Ranking omset studio & tren ekosistem</p>
+            <h1>Leaderboard</h1>
+            <p>Studio dan akun jualan terbaik bulan ini, lalu tren omset</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <select className="form-input" style={{ paddingLeft: 10, width: 110 }}
@@ -136,6 +137,8 @@ export default function Performance() {
           </div>
         </div>
       </div>
+
+      <Leaderboard bulan={bulan} tahun={tahun} />
 
       {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
 

@@ -32,15 +32,16 @@ const DanaPengembangan = lazy(() => import('./pages/DanaPengembangan/index'))
 const Payroll          = lazy(() => import('./pages/Payroll/index'))
 const SDM              = lazy(() => import('./pages/SDM/index'))
 const WebCircle        = lazy(() => import('./pages/WebCircle/index'))
+const Forecasting      = lazy(() => import('./pages/Forecasting/index'))
 
-const PAGES = { Dashboard, WeeklyReport, Finance, Members, Announcement, Health, Koperasi, Kader, Performance, Goals, Asset, Rekrutmen, Profile, Milestone, AI, MasterData, Calendar, Reports, Panduan, Modul, Sosmed, DanaPengembangan, Payroll, SDM, WebCircle }
+const PAGES = { Dashboard, WeeklyReport, Finance, Members, Announcement, Health, Koperasi, Kader, Performance, Goals, Asset, Rekrutmen, Profile, Milestone, AI, MasterData, Calendar, Reports, Panduan, Modul, Sosmed, DanaPengembangan, Payroll, SDM, WebCircle, Forecasting }
 
 // Slug URL Indonesia — cuma dipakai pas baca/tulis window.location (readLocation/navigate di
 // bawah). Id internal (dipakai NAV/PAGES/badge/onNavigate di semua tempat lain) TIDAK berubah.
 const ID_TO_SLUG = {
-  Dashboard: 'dashboard', WeeklyReport: 'laporan-omset', Finance: 'keuangan',
+  WeeklyReport: 'laporan-omset', Finance: 'keuangan',
   Members: 'anggota', Announcement: 'pengumuman', Health: 'kepatuhan-laporan',
-  Koperasi: 'koperasi', Kader: 'rekam-jejak', Performance: 'performa',
+  Koperasi: 'koperasi', Kader: 'rekam-jejak',
   Goals: 'goals', Asset: 'aset-inventaris', Rekrutmen: 'rekrutmen',
   Profile: 'profil',
   Milestone: 'milestone', AI: 'ai', MasterData: 'unit-usaha',
@@ -50,6 +51,8 @@ const ID_TO_SLUG = {
   Payroll: 'payroll',
   SDM: 'sdm',
   WebCircle: 'web-circle',
+  Forecasting: 'financial-forecasting',
+  Performance: 'leaderboard', Dashboard: 'overview',
 }
 const SLUG_TO_ID = {
   ...Object.fromEntries(Object.entries(ID_TO_SLUG).map(([id, slug]) => [slug, id])),
@@ -57,6 +60,8 @@ const SLUG_TO_ID = {
   // sebenarnya cuma ngukur kepatuhan lapor + ada/nggaknya omset, bukan kesehatan finansial beneran)
   // -- dipertahankan biar bookmark/link lama yang masih beredar tetap jalan.
   'kesehatan-ekosistem': 'Health',
+  // Slug lama sebelum menu Executive (27 Nov 2026).
+  dashboard: 'Dashboard', performa: 'Performance',
 }
 
 // Halaman yang sudah dilebur ke hub (13 Okt 2026) -- id & slug lamanya tetap diterima (link di
@@ -70,6 +75,8 @@ const HUB_ALIAS = {
   Payroll:      { id: 'SDM',     params: { tab: 'payroll' } },
 }
 function resolveAlias(id, params) {
+  // Tab lama Keuangan › Financial Forecasting sekarang menu sendiri (27 Nov 2026).
+  if (id === 'Finance' && params?.tab === 'forecasting') return { id: 'Forecasting', params: {} }
   const alias = HUB_ALIAS[id]
   return alias ? { id: alias.id, params: { ...alias.params, ...(params ?? {}) } } : { id, params: params ?? {} }
 }
@@ -78,7 +85,7 @@ function resolveAlias(id, params) {
 // dan tiap ada event popstate (tombol Back/Forward browser). Slug baru dicek dulu, fallback ke
 // id lama (backward-compat buat bookmark/link lama yang masih beredar).
 function readLocation() {
-  const path = window.location.pathname.replace(/^\/+|\/+$/g, '') || 'dashboard'
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '') || 'overview'
   const active = SLUG_TO_ID[path] ?? (PAGES[path] ? path : null) ?? 'Dashboard'
   const params = Object.fromEntries(new URLSearchParams(window.location.search))
   const r = resolveAlias(active, params)

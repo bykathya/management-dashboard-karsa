@@ -127,7 +127,8 @@ export const getMonthlySummary = async (req, res) => {
       // Studio kolaborasi (angkanya dihitung di circle mitra) tidak ikut ringkasan keuangan ekosistem.
       prisma.studio.findMany({
         where: { statusAktif: true, ...STUDIO_DIHITUNG },
-        select: { id: true, tipe: true },
+        select: { id: true, tipe: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true } } } } },
+        orderBy: { nama: 'asc' },
       }),
       prisma.weeklyReport.findMany({
         where: { periodeAwal: { gte: startOfMonth, lte: endOfMonth }, ...LAPORAN_DIHITUNG },
@@ -198,6 +199,15 @@ export const getMonthlySummary = async (req, res) => {
 
     const ekuitasMap = Object.fromEntries(cpmNotes.map(n => [n.studioId, n.ekuitas ?? 0]))
 
+    // Per studio untuk tabel "Posisi Kas + Ekuitas & CPM" di Overview (Karsa, 27 Nov 2026).
+    // Runway = (kas + dana di luar kas) / CPM, dalam bulan. Unit di luar wilayah: angka null (disamarkan).
+    const perStudio = studios.map(s => {
+      const koordinator = s.userRoles.map(r => r.user?.nama).filter(Boolean).join(', ') || null
+      if (!lingkup.boleh(s.id)) return { studioId: s.id, nama: s.nama, koordinator, kas: null, ekuitas: null, kasEkuitas: null, cpm: null, runway: null }
+      const kas = kasMap[s.id] ?? 0, ekuitas = ekuitasMap[s.id] ?? 0, cpm = cpmMap[s.id]?.totalCpm ?? 0
+      return { studioId: s.id, nama: s.nama, koordinator, kas, ekuitas, kasEkuitas: kas + ekuitas, cpm, runway: cpm > 0 ? (kas + ekuitas) / cpm : 0 }
+    })
+
     for (const s of studios) {
       // Jumlah unit tetap seluruhnya (totalStudio/totalProject di atas); UANG hanya dari unit dalam wilayah.
       if (!lingkup.boleh(s.id)) continue
@@ -248,6 +258,8 @@ export const getMonthlySummary = async (req, res) => {
         totalDanaCircle, totalDanaRumahUsaha,
         totalEkuitasPE,
         totalCpm, totalStudio, totalProject, totalKorporasi, totalAnggota, rumahUsaha,
+        runway: totalCpm > 0 ? totalEkuitasUsaha / totalCpm : 0,
+        perStudio,
         lingkup: infoLingkup(lingkup),
       },
     })

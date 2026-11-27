@@ -6,7 +6,6 @@ import LabelJalur from '../../components/common/LabelJalur'
 import { ECOSYSTEM_NAME, FITUR } from '../../config/ecosystem'
 
 const WeeklyReport = lazy(() => import('../WeeklyReport/index'))
-const Forecasting  = lazy(() => import('./Forecasting'))
 const Pengeluaran  = lazy(() => import('./Pengeluaran'))
 const Koperasi     = lazy(() => import('../Koperasi/index'))
 const DanaPos      = lazy(() => import('./index'))
@@ -21,15 +20,12 @@ const DanaTengah   = lazy(() => import('./DanaTengah'))
 export const HUB_TABS = [
   { id: 'omset',       label: '📋 Laporan Omset',          badge: 'WeeklyReport' },
   { id: 'pengeluaran', label: '🧾 Pengeluaran' },
-  { id: 'forecasting', label: '📈 Financial Forecasting' },
   { id: 'bulanan',     label: '📊 Rekap Bulanan' },
   { id: 'koperasi',    label: '🤝 Koperasi',               badge: 'Koperasi' },
   { id: 'danatengah',  label: '🌿 Dana Tengah' },
   { id: 'dana',        label: '🏦 Dana & Pos' },
 ]
 
-const PELAPOR = ['KOORDINATOR', 'PENDAMPING']
-const PENGAWAS = ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL']
 
 function Memuat() {
   return <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><div className="spinner" style={{ width: 28, height: 28, borderWidth: 3 }} /></div>
@@ -38,10 +34,8 @@ function Memuat() {
 export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh, badges = {} }) {
   const { user } = useAuth()
   const roles = user?.roles ?? []
-  // Tab bawaan: pelapor unit (koordinator/pendamping) paling sering ke sini buat lapor omset;
-  // pengawas (kepala/admin) paling sering lihat gambaran besar.
-  const pengawas = roles.some(r => PENGAWAS.includes(r.roleType))
-  const bawaan = !pengawas && roles.some(r => PELAPOR.includes(r.roleType)) ? 'omset' : 'forecasting'
+  // Financial Forecasting pindah ke menu Executive sendiri (27 Nov 2026); bawaan hub = Laporan Omset.
+  const bawaan = 'omset'
   // Role di luar ROLE_UANG (Karyawan/Magang/dll) cuma boleh tab Koperasi ("Simpanan koperasi
   // saya") -- tab lain nampilin angka omset/keuangan yang server-nya juga nolak buat mereka.
   const bolehUang = roles.some(r => ROLE_UANG.includes(r.roleType))
@@ -72,7 +66,6 @@ export default function KeuanganHub({ tab, studioId, onNavigate, onBadgeRefresh,
         {aktif === 'omset'       && <WeeklyReport embedded hubTab="mingguan" onPindahTab={pindahDariOmset} />}
         {aktif === 'bulanan'     && <WeeklyReport embedded hubTab="bulanan"  onPindahTab={pindahDariOmset} onNavigate={onNavigate} />}
         {aktif === 'pengeluaran' && <Pengeluaran user={user} onNavigate={onNavigate} studioIdAwal={studioId} />}
-        {aktif === 'forecasting' && <Forecasting user={user} onNavigate={onNavigate} />}
         {aktif === 'koperasi'    && FITUR.koperasi && <Koperasi onBadgeRefresh={onBadgeRefresh} />}
         {aktif === 'danatengah'  && FITUR.danaTengah && <DanaTengah />}
         {aktif === 'dana'        && <DanaPos />}

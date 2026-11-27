@@ -183,4 +183,7 @@ export function getRoleLabel(roleType) {
 
 // Role yang boleh lihat angka omset/keuangan mentah (section Operasional di Sidebar, hub Keuangan)
 // -- cermin gate server checkMinRole('KADER') di routes weeklyReport/performance/finance/reports.
+// Financial Forecasting (Karsa, 27 Nov 2026): hanya Koordinator ke atas di jalur pengelola unit --
+// Admin (ADMIN_FUNGSIONAL), Pendamping, Kader, Talent, Magang tidak.
+export const ROLE_FF = ['ADVISOR','KEPALA_EKOSISTEM','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','KOORDINATOR']
 export const ROLE_UANG = ['ADVISOR','KEPALA_EKOSISTEM','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','ADMIN_FUNGSIONAL','PENDAMPING','KOORDINATOR','KADER']

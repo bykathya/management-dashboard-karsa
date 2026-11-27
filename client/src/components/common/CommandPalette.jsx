@@ -22,10 +22,11 @@ const EXTRA = [
 // Kata kunci tambahan per halaman — ketik frasa ini untuk menemukan halamannya
 const KEYWORDS = {
   SDM:          'sdm anggota orang tim performa kader rekrutmen payroll gaji',
-  Dashboard:    'ringkasan finansial total kas dana pe cpm ekuitas overview',
-  Finance:      'financial forecasting forecast kas cpm omset target menabung pos rumah rekap bulanan dana pe dana ekosistem dana forum dana berkah dana rumah tangga dana circle setoran pos internal pos eksternal keuangan cpm bulanan ekuitas studio iuran finance',
+  Dashboard:    'overview dashboard ringkasan finansial total kas dana pe cpm ekuitas runway',
+  Forecasting:  'financial forecasting forecast ff kas cpm target menabung pos bulanan',
+  Finance:      'kas omset target menabung pos rumah rekap bulanan dana pe dana ekosistem dana forum dana berkah dana rumah tangga dana circle setoran pos internal pos eksternal keuangan cpm bulanan ekuitas studio iuran finance',
   WeeklyReport: 'laporan omset omset mingguan kas fiverr etsy upwork vgen komunitas pengeluaran kurs laporan studio',
-  Performance:  'performa studio cpm target ekuitas studio pencapaian omset',
+  Performance:  'leaderboard peringkat top studio akun jualan market account ath atl performa studio cpm target ekuitas studio pencapaian omset',
   Reports:      'unduh laporan rekap export download rekap bulanan rekap mingguan',
   Members:      'anggota profil anggota thp take home pay nik bpjs rekening bio daftar anggota kontak',
   Kader:        'rekam jejak jurnal talent penilaian kpi timeline magang perkembangan laporan kader',

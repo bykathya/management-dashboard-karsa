@@ -185,8 +185,8 @@ function TierKoordinator({ onNavigate, studioNama }) {
             desc="Menu Keuangan, tab pertama. Isi setiap Sabtu: omset per platform & pengeluaran per item. Ada riwayat laporan juga." />
           <PageCard emoji="🧾" title="Pengeluaran" page="Finance" params={{ tab: 'pengeluaran' }} onNavigate={onNavigate} color="var(--amber)"
             desc="Menu Keuangan. Satu tempat untuk melihat & mencatat pengeluaran unitmu per bulan, dikelompokkan per minggu laporan." />
-          <PageCard emoji="📈" title="Financial Forecasting" page="Finance" params={{ tab: 'forecasting' }} onNavigate={onNavigate} color="var(--cyan)"
-            desc="Kas, CPM, omset & target studiomu dalam satu layar, plus tombol Update Kas." />
+          <PageCard emoji="📈" title="Financial Forecasting" page="Forecasting" onNavigate={onNavigate} color="var(--cyan)"
+            desc="Menu Executive (Koordinator ke atas). Kas, CPM, omset & target studiomu dalam satu layar, plus tombol Update Kas." />
           <PageCard emoji="✍️" title="Performa Kader" page="SDM" params={{ tab: 'kader' }} onNavigate={onNavigate} color="var(--accent-light)"
             desc="Menu SDM. Isi Penilaian Kader anggotamu dan rekam riwayat perjalanan mereka." />
           <PageCard emoji="🏦" title="Koperasi" page="Finance" params={{ tab: 'koperasi' }} onNavigate={onNavigate} color="var(--green)"
@@ -243,8 +243,8 @@ function TierAdmin({ onNavigate }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
           <PageCard emoji="🏥" title="Kepatuhan Laporan" page="Health" onNavigate={onNavigate} color="var(--accent)"
             desc="Siapa yang sudah/belum lapor, skor kepatuhan per studio & circle, dan Kondisi Tim dari Penilaian Kader." />
-          <PageCard emoji="💰" title="Keuangan" page="Finance" params={{ tab: 'forecasting' }} onNavigate={onNavigate} color="var(--green)"
-            desc="Satu menu untuk uang: Laporan Omset, Financial Forecasting, Rekap Bulanan, Koperasi, Dana & Pos." />
+          <PageCard emoji="💰" title="Keuangan" page="Finance" onNavigate={onNavigate} color="var(--green)"
+            desc="Satu menu untuk uang: Laporan Omset, Pengeluaran, Rekap Bulanan, Koperasi, Dana & Pos." />
           <PageCard emoji="👥" title="SDM" page="SDM" onNavigate={onNavigate} color="var(--accent-light)"
             desc="Satu menu untuk orang: Anggota, Performa Kader, Rekrutmen, Payroll." />
           <PageCard emoji="📈" title="Performa" page="Performance" onNavigate={onNavigate} color="var(--cyan)"
