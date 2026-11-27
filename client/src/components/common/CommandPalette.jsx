@@ -23,6 +23,7 @@ const EXTRA = [
 const KEYWORDS = {
   SDM:          'sdm anggota orang tim performa kader rekrutmen payroll gaji',
   Dashboard:    'overview dashboard ringkasan finansial total kas dana pe cpm ekuitas runway',
+  DetailKas:    'detail kas ekuitas saldo rekening bank screenshot bukti vgen paypal dana pengamanan valid',
   Forecasting:  'financial forecasting forecast ff kas cpm target menabung pos bulanan',
   Finance:      'kas omset target menabung pos rumah rekap bulanan dana pe dana ekosistem dana forum dana berkah dana rumah tangga dana circle setoran pos internal pos eksternal keuangan cpm bulanan ekuitas studio iuran finance',
   WeeklyReport: 'laporan omset omset mingguan kas fiverr etsy upwork vgen komunitas pengeluaran kurs laporan studio',

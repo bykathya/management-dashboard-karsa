@@ -33,8 +33,9 @@ const Payroll          = lazy(() => import('./pages/Payroll/index'))
 const SDM              = lazy(() => import('./pages/SDM/index'))
 const WebCircle        = lazy(() => import('./pages/WebCircle/index'))
 const Forecasting      = lazy(() => import('./pages/Forecasting/index'))
+const DetailKas        = lazy(() => import('./pages/DetailKas/index'))
 
-const PAGES = { Dashboard, WeeklyReport, Finance, Members, Announcement, Health, Koperasi, Kader, Performance, Goals, Asset, Rekrutmen, Profile, Milestone, AI, MasterData, Calendar, Reports, Panduan, Modul, Sosmed, DanaPengembangan, Payroll, SDM, WebCircle, Forecasting }
+const PAGES = { Dashboard, WeeklyReport, Finance, Members, Announcement, Health, Koperasi, Kader, Performance, Goals, Asset, Rekrutmen, Profile, Milestone, AI, MasterData, Calendar, Reports, Panduan, Modul, Sosmed, DanaPengembangan, Payroll, SDM, WebCircle, Forecasting, DetailKas }
 
 // Slug URL Indonesia — cuma dipakai pas baca/tulis window.location (readLocation/navigate di
 // bawah). Id internal (dipakai NAV/PAGES/badge/onNavigate di semua tempat lain) TIDAK berubah.
@@ -51,7 +52,7 @@ const ID_TO_SLUG = {
   Payroll: 'payroll',
   SDM: 'sdm',
   WebCircle: 'web-circle',
-  Forecasting: 'financial-forecasting',
+  Forecasting: 'financial-forecasting', DetailKas: 'detail-kas',
   Performance: 'leaderboard', Dashboard: 'overview',
 }
 const SLUG_TO_ID = {
