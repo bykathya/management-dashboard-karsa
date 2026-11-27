@@ -5,8 +5,8 @@ import { studioBolehDilihat, peranStudio } from './circle.js'
 // koordinator ke atas boleh menambah/ubah/hapus dari web circle supaya dropdown "Masuk lewat akun" terisi.
 // feePersen disimpan sebagai pecahan (0.2 = 20%), sama seperti di Ekosistem.
 // WhatsApp/Telegram/Instagram: order yang masuk dari luar marketplace (10 Nov 2026, masukan tim) — tetap dicatat sebagai akun agar tampil di analitik; omzetnya masuk kolom "Lainnya" di laporan mingguan
-const PLATFORM = ['Fiverr', 'Etsy', 'Upwork', 'Vgen', 'Ko-fi', 'Komunitas', 'WhatsApp', 'Telegram', 'Instagram', 'Internal', 'Lainnya']
-// Karsa Circle (27 Nov 2026): Ko-fi ditambahkan; di Laporan Omset web pusat ikut kolom Lainnya (utils/omsetBayangan.js).
+const PLATFORM = ['Fiverr', 'Etsy', 'Upwork', 'Vgen', 'Ko-fi', 'Artistree', 'Komunitas', 'WhatsApp', 'Telegram', 'Instagram', 'Internal', 'Lainnya']
+// Karsa Circle (27 Nov 2026): Ko-fi & Artistree ditambahkan; di Laporan Omset web pusat ikut kolom Lainnya (utils/omsetBayangan.js).
 const AKUN_OTOMATIS = 'Order Internal' // dibuat sistem untuk order tanpa akun, bukan akun jualan sungguhan
 const gagal = (res, status, message) => res.status(status).json({ success: false, message })
 
