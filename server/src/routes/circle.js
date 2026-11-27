@@ -31,6 +31,7 @@ import * as Jd from '../controllers/circleJadwal.js'
 import * as Pf from '../controllers/circleProfil.js'
 import * as Mn from '../controllers/circleMentor.js'
 import * as Pm from '../controllers/circlePemasukan.js'
+import * as Ds from '../controllers/circleDailySheet.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
 
@@ -471,5 +472,12 @@ router.get('/pemasukan',            authenticate, populateRoles, Pm.daftar)
 router.post('/pemasukan',           authenticate, populateRoles, Pm.tambah)
 router.patch('/pemasukan/:id/lunas', authenticate, populateRoles, Pm.aturLunas)
 router.delete('/pemasukan/:id',     authenticate, populateRoles, Pm.hapus)
+// Daily Sheet (Karsa Circle, 27 Nov 2026) — inbox, order progress, lempar kerjaan
+router.get('/daily-sheet',                authenticate, populateRoles, Ds.muat)
+router.post('/daily-sheet/inbox',         authenticate, populateRoles, Ds.tambahInbox)
+router.patch('/daily-sheet/inbox/:id',    authenticate, populateRoles, Ds.ubahInbox)
+router.delete('/daily-sheet/inbox/:id',   authenticate, populateRoles, Ds.hapusInbox)
+router.post('/daily-sheet/order',         authenticate, populateRoles, Ds.tambahOrder)
+router.patch('/daily-sheet/order/:id',    authenticate, populateRoles, Ds.ubahOrder)
 
 export default router
