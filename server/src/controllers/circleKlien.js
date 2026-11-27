@@ -10,7 +10,7 @@ const gagal = (res, kode, pesan) => res.status(kode).json({ success: false, mess
 const wrap = (isi) => async (req, res) => { try { return await isi(req, res) } catch { return gagal(res, 500, 'Terjadi kesalahan, coba lagi') } }
 const norm = (t) => String(t ?? '').trim().replace(/\s+/g, ' ')
 const kunci = (t) => norm(t).toLowerCase()
-const PLATFORM_ASAL = ['Fiverr', 'Etsy', 'Upwork', 'Vgen', 'Komunitas', 'WhatsApp', 'Telegram', 'Instagram', 'Lainnya']
+const PLATFORM_ASAL = ['Fiverr', 'Etsy', 'Upwork', 'Vgen', 'Ko-fi', 'Komunitas', 'WhatsApp', 'Telegram', 'Instagram', 'Lainnya']
 
 /** Cari klien dengan nama sama (tanpa peduli huruf) atau buat baru; mengembalikan { id, nama } berejaan baku. asal dipakai bila klien baru. */
 export async function tautkanKlien(studioId, namaKlien, asal = null) {
