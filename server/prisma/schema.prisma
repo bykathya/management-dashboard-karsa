@@ -956,6 +956,11 @@ model OrderProduksi {
   pendapatanCicilan PenarikanPendapatan[] @relation("PendapatanCicilan")
   // 20 Nov 2026: PORTO | PERSIAPAN = pekerjaan internal (bukan order klien; tidak dihitung omset/order masuk) — null = order klien. Saringan: ORDER_KLIEN (utils/produksi.js)
   pekerjaanInternal String?
+  // Daily Sheet (Karsa Circle, 27 Nov 2026): progres sederhana (WIP | REVISI | WAITLIST | DONE), cicilan/DP & tip dalam USD, jalur bayar
+  progresSheet      String?
+  partialUsd        Float?
+  tipUsd            Float?
+  jalurBayar        String?
 }
 
 // FREELANCER_PERORANGAN -- satu orang lepas, namaEksternal teks bebas.
@@ -2737,4 +2742,23 @@ model DanaTengahPakai {
   createdAt DateTime @default(now())
 
   @@index([tanggal])
+}
+
+// Daily Sheet › Inbox (Karsa Circle, 27 Nov 2026): chat masuk calon klien per minggu, per akun jualan. Nilai dalam USD.
+model InboxSheet {
+  id         String   @id @default(cuid())
+  studioId   String
+  akunId     String?
+  tanggal    DateTime @db.Date
+  klien      String
+  produk     String?
+  agreedUsd  Float?
+  realUsd    Float?
+  status     String   @default("TANYA") // TANYA | DEAL | BATAL
+  jalurBayar String?
+  olehId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([studioId, tanggal])
 }
