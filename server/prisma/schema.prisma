@@ -370,6 +370,11 @@ model StudioRekening {
   studio        Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
+  // Detail Kas + Ekuitas (Karsa, 27 Nov 2026): dicek Kepala Circle / Super Admin dengan screenshot; berubah saldo = kembali belum valid
+  catatan       String?
+  valid         Boolean  @default(false)
+  validOleh     String?
+  validPada     DateTime?
 }
 
 enum StudioTipe {
@@ -2794,4 +2799,41 @@ model PerformaOrang {
 
   @@unique([studioId, tahun, bulan, userId, jenis])
   @@index([studioId, tahun, bulan])
+}
+
+// Detail Kas + Ekuitas (Karsa, 27 Nov 2026): tempat uang studio SELAIN rekening bank (saldo tertahan di marketplace, uang dalam
+// perjalanan, dana pengamanan). Jumlahnya ditulis ke StudioMonthlyNote.ekuitas bulan berjalan ("Dana di luar kas"), jadi Overview
+// tetap membaca satu sumber. Rekening bank tetap StudioRekening (= kas resmi).
+model PosKas {
+  id        String    @id @default(cuid())
+  studioId  String
+  jenis     String // MARKET | TRANSIT | AMAN
+  nama      String
+  rupiah    Float     @default(0)
+  dolar     Float     @default(0)
+  atasNama  String?
+  catatan   String?
+  valid     Boolean   @default(false)
+  validOleh String?
+  validPada DateTime?
+  urutan    Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([studioId])
+}
+
+// Bukti screenshot saldo (rekening atau pos). File di folder privat server, hanya dibuka lewat API yang memeriksa login & wewenang.
+model BuktiKas {
+  id         String   @id @default(cuid())
+  studioId   String
+  rekeningId String?
+  posId      String?
+  berkas     String // nama file acak di folder privat
+  mime       String
+  ukuran     Int
+  olehId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([studioId])
 }

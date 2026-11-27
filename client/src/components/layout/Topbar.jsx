@@ -4,6 +4,7 @@ import { FITUR } from '../../config/ecosystem'
 const PAGE_TITLES = {
   Dashboard:    'Overview',
   Forecasting:  'Financial Forecasting',
+  DetailKas:    'Detail Kas + Ekuitas',
   WeeklyReport: 'Laporan Omset',
   Finance:      'Keuangan',
   SDM:          'SDM',

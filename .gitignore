@@ -33,3 +33,6 @@ nixpacks.toml
 
 # File upload user (kanban hasil karya, SKB studio) — disimpan lokal di VPS, jangan ikut commit
 server/uploads/
+
+# Bukti kas privat (Detail Kas + Ekuitas) — data sensitif, jangan di-commit
+server/private/

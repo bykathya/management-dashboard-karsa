@@ -56,3 +56,20 @@ export const uploadModul = multer({
   fileFilter: pdfFilter,
   limits: { fileSize: 20 * 1024 * 1024 },
 })
+
+// Bukti saldo kas (Detail Kas + Ekuitas, 27 Nov 2026): folder PRIVAT (bukan /uploads yang terbuka tanpa login).
+// Dibuka hanya lewat GET /api/kas-detail/bukti/:id yang memeriksa login & wewenang unit.
+export const buktiKasDir = path.join(__dirname, '../../private/bukti-kas')
+mkdirSync(buktiKasDir, { recursive: true })
+const gambarFilter = (_req, file, cb) => {
+  if (/^image\/(png|jpe?g|webp|gif)$/i.test(file.mimetype)) cb(null, true)
+  else cb(tolak('Bukti harus gambar (PNG, JPG, WebP, atau GIF).'))
+}
+export const uploadBuktiKas = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, buktiKasDir),
+    filename: (_req, file, cb) => cb(null, `${randomBytes(24).toString('hex')}${({ 'image/png': '.png', 'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif' })[file.mimetype.toLowerCase()] ?? ''}`),
+  }),
+  fileFilter: gambarFilter,
+  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+})

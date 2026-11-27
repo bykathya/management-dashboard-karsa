@@ -349,7 +349,7 @@ function TabelRunway({ rows, total, onNavigate }) {
           <div style={{ fontFamily: 'var(--font-judul)', fontWeight: 600, fontSize: 15 }}>Posisi Kas + Ekuitas Usaha &amp; CPM Bulanan</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Kas + Ekuitas = kas rekening + dana di luar kas · Runway = kas cukup untuk berapa bulan</div>
         </div>
-        {onNavigate && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('Forecasting')}>Detail CPM →</button>}
+        {onNavigate && <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('DetailKas')}>Detail Kas + Ekuitas →</button><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('Forecasting')}>Detail CPM →</button></div>}
       </div>
       <div className="table-wrap" style={{ overflowX: 'auto' }}>
         <table className="table">
