@@ -4,6 +4,7 @@ import { PLATFORMS } from './constants'
 import PengeluaranMinggu from './PengeluaranMinggu'
 import LabelJalur from '../../components/common/LabelJalur'
 import { bukaPengeluaran } from '../../utils/bukaPengeluaran'
+import api from '../../services/api'
 
 const PLATFORM_HINTS = [
   { label: 'Fiverr',     desc: 'Pesanan dari buyer di Fiverr. Hitung yang sudah Completed/diterima, bukan yang masih In Progress.' },
@@ -17,6 +18,21 @@ const PLATFORM_HINTS = [
 // ── Komponen form omset (dipakai input baru & edit) ──────
 export default function OmsetForm({ form, onChange, myStudios, statusData, isEdit, onManualScore, isAutoScore, kasLive, studioId, periode }) {
   const [showHint, setShowHint] = useState(false)
+  // Isi dari Daily Sheet (27 Nov 2026): hanya mengisi kolom; Koordinator tetap mengecek lalu mengirim.
+  const [isiDs, setIsiDs] = useState(null) // { sibuk } | { pesan, galat }
+  const unitId = form.studioId || studioId
+  const isiDariDailySheet = async () => {
+    if (!unitId || !periode?.awal) return setIsiDs({ galat: true, pesan: 'Pilih studio dulu.' })
+    setIsiDs({ sibuk: true })
+    try {
+      const r = await api.get(`/api/weekly-reports/dari-daily-sheet?studioId=${unitId}&periodeAwal=${String(periode.awal).slice(0, 10)}`)
+      const d = r.data.data
+      for (const p of PLATFORMS) onChange(p.key, String(d.omset[p.key] ?? 0))
+      setIsiDs({ pesan: d.jumlahOrder ? `Terisi dari ${d.jumlahOrder} order Daily Sheet. Cek lagi angkanya sebelum kirim.` : 'Belum ada uang masuk di Daily Sheet untuk minggu ini, jadi semua diisi 0.' })
+    } catch (e) {
+      setIsiDs({ galat: true, pesan: e.response?.data?.message ?? 'Gagal mengambil data Daily Sheet' })
+    }
+  }
   const totalUsd = PLATFORMS.reduce((s, p) => s + (Number(form[p.key]) || 0), 0)
   const totalRp  = totalUsd * form.kurs
 
@@ -44,6 +60,9 @@ export default function OmsetForm({ form, onChange, myStudios, statusData, isEdi
       <div className="form-group" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <label className="form-label" style={{ margin: 0 }}>Omset per Platform (USD)</label>
+          <button type="button" className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto' }} onClick={isiDariDailySheet} disabled={isiDs?.sibuk}>
+            {isiDs?.sibuk ? 'Mengambil…' : 'Isi dari Daily Sheet'}
+          </button>
           <button type="button" onClick={() => setShowHint(h => !h)}
             style={{ width: 20, height: 20, borderRadius: '50%', border: '1.5px solid var(--border)',
               background: showHint ? 'var(--accent)' : 'var(--bg-input)', color: showHint ? 'var(--on-accent)' : 'var(--text-muted)',
@@ -69,6 +88,11 @@ export default function OmsetForm({ form, onChange, myStudios, statusData, isEdi
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
               Isi <strong>0</strong> untuk platform yang tidak ada pemasukan minggu ini. Jangan kosongkan.
             </div>
+          </div>
+        )}
+        {isiDs?.pesan && (
+          <div style={{ marginBottom: 10, fontSize: 12, padding: '8px 12px', borderRadius: 8, background: isiDs.galat ? 'var(--red-subtle)' : 'var(--green-subtle)', color: isiDs.galat ? 'var(--red)' : 'var(--green)' }}>
+            {isiDs.pesan} Ko-fi, Artistree, dan platform lain masuk kolom Lainnya.
           </div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
