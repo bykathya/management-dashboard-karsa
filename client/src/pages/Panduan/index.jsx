@@ -20,7 +20,7 @@ function getRoleLabel(roleType) {
     ADVISOR: 'Super Admin', KEPALA_EKOSISTEM: 'Kepala Ekosistem',
     KEPALA_CIRCLE: 'Kepala Circle', KEPALA_RUMAH_USAHA: 'Kepala Rumah Usaha', ADMIN_FUNGSIONAL: 'Admin Fungsional',
     PENDAMPING: 'Pendamping', KOORDINATOR: 'Koordinator',
-    KADER: 'Kader', KARYAWAN: 'Karyawan', MAGANG: 'Magang',
+    KADER: 'Kader', KARYAWAN: 'Talent', MAGANG: 'Magang',
   }
   return map[roleType] ?? roleType
 }

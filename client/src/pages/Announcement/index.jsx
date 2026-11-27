@@ -282,7 +282,7 @@ const ROLE_OPTIONS = [
   { value: 'KOORDINATOR',      label: '🟣 Koordinator (Tetap)' },
   { value: 'PENDAMPING',       label: '🟣 Pendamping' },
   { value: 'KADER',            label: '🟠 Kader' },
-  { value: 'KARYAWAN',         label: '🟠 Karyawan' },
+  { value: 'KARYAWAN',         label: '🟠 Talent' },
   { value: 'MAGANG',           label: '🟢 Magang / Intern' },
   { value: 'LIVE_IN',          label: '🏠 Live In' },
   { value: 'KEPALA_CIRCLE',    label: '⭕ Kepala Circle' },
