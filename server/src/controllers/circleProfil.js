@@ -9,7 +9,7 @@ import { kelolaStudio } from '../utils/roles.js'
 
 const gagal = (res, kode, pesan) => res.status(kode).json({ success: false, message: pesan })
 const wrap = (isi) => async (req, res) => { try { return await isi(req, res) } catch { return gagal(res, 500, 'Terjadi kesalahan, coba lagi') } }
-const PERAN = { KOORDINATOR: 'Koordinator', PENDAMPING: 'Pendamping', KADER: 'Kader', KARYAWAN: 'Karyawan', MAGANG: 'Magang', ADMIN_FUNGSIONAL: 'Admin', KEPALA_CIRCLE: 'Kepala Circle' }
+const PERAN = { KOORDINATOR: 'Koordinator', PENDAMPING: 'Pendamping', KADER: 'Kader', KARYAWAN: 'Talent', MAGANG: 'Magang', ADMIN_FUNGSIONAL: 'Admin', KEPALA_CIRCLE: 'Kepala Circle' }
 const URUT = ['KEPALA_CIRCLE', 'KOORDINATOR', 'PENDAMPING', 'ADMIN_FUNGSIONAL', 'KADER', 'KARYAWAN', 'MAGANG']
 const STATUS = ['JOMBLO', 'TAKEN', 'RAHASIA']
 const ZODIAK = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagitarius', 'Capricorn', 'Aquarius', 'Pisces']

@@ -70,7 +70,7 @@ function HalamanRingkasan({ judul, sorot, r, bagian, lingkupNama, bulanLabel, bu
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 28 }}>
         <KartuAngka e="🎨" label="Unit Usaha" nilai={`${uu.total} Unit`} sub={rincianUnit} lebar={lebarBawah} tinggi={132} besar={30} />
         <KartuAngka e="👥" label="Tim Member" nilai={`${(r.anggota ?? 0) - (r.magang ?? 0)} Anggota`}
-          sub={`+ ${r.magang ?? 0} Tim Magang · total ${r.anggota ?? 0} orang`} sub2="Anggota = Kepala, Koordinator, Kader & Karyawan aktif"
+          sub={`+ ${r.magang ?? 0} Tim Magang · total ${r.anggota ?? 0} orang`} sub2="Anggota = Kepala, Koordinator, Kader & Talent aktif"
           lebar={lebarBawah} tinggi={132} besar={30} />
         <Stiker style={{ width: lebarBawah, height: 132 }} isiStyle={{ paddingVertical: 12, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ width: lebarBawah - 30 - 112, marginRight: 6 }}>

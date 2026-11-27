@@ -80,7 +80,7 @@ export const TIER_BADGE = {
 // Label kategori keanggotaan (User.statusKeanggotaan) -- BUKAN hak akses (itu RoleType). Kalau
 // null, tampilan jatuh balik ke TIER_BADGE turunan role seperti sebelumnya.
 export const STATUS_KEANGGOTAAN = {
-  KARYAWAN:     { label: '🟠 Karyawan',      cls: 'warning' },
+  KARYAWAN:     { label: '🟠 Talent',        cls: 'warning' },
   MENTOR:       { label: '🧭 Mentor',        cls: 'purple' },
   MAGANG:       { label: '🟢 Magang',        cls: 'success' },
   SISWA_VOKASI: { label: '🎓 Siswa Vokasi',  cls: 'info' },
@@ -172,7 +172,7 @@ export function getRoleLabel(roleType) {
     PENDAMPING:       'Pendamping',
     KOORDINATOR:      'Koordinator',
     KADER:            'Kader',
-    KARYAWAN:         'Karyawan',
+    KARYAWAN:         'Talent', // Karsa Circle: di layar disebut Talent (roleType tetap KARYAWAN)
     MAGANG:           'Magang',
     PENGELOLA_DANA:   'Pengelola Dana',
     DIGNITY:          'Dignity',
