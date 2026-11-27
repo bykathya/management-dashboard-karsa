@@ -2762,3 +2762,36 @@ model InboxSheet {
 
   @@index([studioId, tanggal])
 }
+
+// Daily Sheet › Performa, Bonus & Lembur (Karsa Circle, 27 Nov 2026): dana bonus, komisi %, kurs per unit per bulan
+model PerformaSheet {
+  id           String   @id @default(cuid())
+  studioId     String
+  tahun        Int
+  bulan        Int
+  poolAdmin    Float    @default(0)
+  poolArtis    Float    @default(0)
+  komisiPersen Float    @default(5)
+  kurs         Float?
+  diubahOleh   String?
+  updatedAt    DateTime @updatedAt
+
+  @@unique([studioId, tahun, bulan])
+}
+
+// Target & porsi bonus per orang (jenis ADMIN = admin marketing per akun, ARTIS = yang mengerjakan order)
+model PerformaOrang {
+  id        String   @id @default(cuid())
+  studioId  String
+  tahun     Int
+  bulan     Int
+  userId    String
+  jenis     String // ADMIN | ARTIS
+  akunId    String?
+  targetUsd Float    @default(0)
+  persen    Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([studioId, tahun, bulan, userId, jenis])
+  @@index([studioId, tahun, bulan])
+}
