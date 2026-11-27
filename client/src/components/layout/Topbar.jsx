@@ -5,6 +5,8 @@ const PAGE_TITLES = {
   Dashboard:    'Overview',
   Forecasting:  'Financial Forecasting',
   DetailKas:    'Detail Kas + Ekuitas',
+  Manifest:     'Manifest',
+  Sop:          'SOP & Aturan Studio',
   LaporanMingguan: 'Weekly Report',
   LaporanBulanan:  'Monthly Report',
   WeeklyReport: 'Laporan Omset',
