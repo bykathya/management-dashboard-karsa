@@ -32,6 +32,7 @@ import * as Pf from '../controllers/circleProfil.js'
 import * as Mn from '../controllers/circleMentor.js'
 import * as Pm from '../controllers/circlePemasukan.js'
 import * as Ds from '../controllers/circleDailySheet.js'
+import { getInfo } from '../controllers/circleInfo.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
 
@@ -329,6 +330,7 @@ router.post('/checkin', authenticate, populateRoles, Kh.kirimCheckIn)
 router.post('/checkin/lewati', authenticate, populateRoles, Kh.lewatiCheckIn)
 router.get('/checkin/tim', authenticate, populateRoles, Kh.getCheckInTim)
 router.get('/kalender', authenticate, populateRoles, Kh.getKalenderBulan)
+router.get('/info', authenticate, populateRoles, getInfo) // Info & Dokumen dari web pusat (Karsa, 27 Nov 2026)
 router.post('/kalender/acara', authenticate, populateRoles, Kh.buatAcara)
 router.patch('/kalender/acara/:id', authenticate, populateRoles, Kh.ubahAcara)
 router.delete('/kalender/acara/:id', authenticate, populateRoles, Kh.hapusAcara)

@@ -2,6 +2,18 @@ import prisma from '../prisma.js'
 import { notifyUser }  from '../bot.js'
 import { parsePagination } from '../utils/roles.js'
 
+export const JENIS_INFO = ['PENGUMUMAN', 'EVENT', 'KONTRAK', 'DOKUMEN']
+
+/** Pengumuman yang ditujukan ke pengguna ini (dipakai web kerja harian). roles = baris UserRole lengkap. */
+export async function wherePengumumanUntuk(roles = []) {
+  const studioIds = roles.map(r => r.studioId).filter(Boolean)
+  const studios = studioIds.length ? await prisma.studio.findMany({ where: { id: { in: studioIds } }, select: { circleId: true, rumahUsahaId: true } }) : []
+  const circleIds = [...new Set([...roles.map(r => r.circleId), ...studios.map(s => s.circleId)].filter(Boolean))]
+  const ruIds = [...new Set([...roles.map(r => r.rumahUsahaId), ...studios.map(s => s.rumahUsahaId)].filter(Boolean))]
+  const peran = [...new Set(roles.map(r => r.roleType))]
+  return { OR: [{ targetTipe: 'ALL' }, { targetTipe: 'CIRCLE', targetId: { in: circleIds } }, { targetTipe: 'RUMAH_USAHA', targetId: { in: ruIds } }, { targetTipe: 'STUDIO', targetId: { in: studioIds } }, { targetTipe: 'ROLE', targetId: { in: peran } }] }
+}
+
 
 async function sendToTelegram(targetTipe, targetId, judul, konten) {
   const msg = `📢 *${judul}*\n\n${konten}`
@@ -78,9 +90,18 @@ export const getAll = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const { judul, konten, targetTipe = 'ALL', targetId, kirimTelegram = false } = req.body
-    if (!judul || !konten) {
-      return res.status(422).json({ success: false, message: 'judul dan konten wajib diisi' })
+    const { judul, targetTipe = 'ALL', targetId, kirimTelegram = false } = req.body
+    const konten = String(req.body.konten ?? '').trim()
+    // Info & Dokumen (Karsa, 27 Nov 2026): jenis, tautan http(s), tanggal & jam event
+    const jenis = JENIS_INFO.includes(req.body.jenis) ? req.body.jenis : 'PENGUMUMAN'
+    const tautan = req.body.tautan ? String(req.body.tautan).trim().slice(0, 500) : null
+    if (tautan && !/^https?:\/\/\S+$/i.test(tautan)) return res.status(422).json({ success: false, message: 'Tautan harus diawali http:// atau https://' })
+    const tanggalEvent = req.body.tanggalEvent ? String(req.body.tanggalEvent) : null
+    if (tanggalEvent && !/^\d{4}-\d{2}-\d{2}$/.test(tanggalEvent)) return res.status(422).json({ success: false, message: 'Tanggal event tidak sah' })
+    if (jenis === 'EVENT' && !tanggalEvent) return res.status(422).json({ success: false, message: 'Event wajib punya tanggal' })
+    const jamEvent = req.body.jamEvent ? String(req.body.jamEvent).slice(0, 40) : null
+    if (!judul || (!konten && !tautan && jenis !== 'EVENT')) {
+      return res.status(422).json({ success: false, message: 'Judul dan isi (atau tautan) wajib diisi' })
     }
     if (['CIRCLE','RUMAH_USAHA','STUDIO','ROLE'].includes(targetTipe) && !targetId) {
       return res.status(422).json({ success: false, message: `targetId wajib diisi untuk targetTipe ${targetTipe}` })
@@ -91,6 +112,7 @@ export const create = async (req, res) => {
         dibuatOleh: req.user.id,
         judul, konten, targetTipe,
         targetId: targetId ?? null,
+        jenis, tautan, jamEvent, tanggalEvent: tanggalEvent ? new Date(tanggalEvent + 'T00:00:00.000Z') : null,
       },
     })
 

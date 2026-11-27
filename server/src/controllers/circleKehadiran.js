@@ -5,6 +5,7 @@ import { resolveWeb, whereLingkup } from '../utils/web.js'
 import { peranKerja, studioBolehDilihat, peranStudio, saringAkun } from './circle.js'
 import { anggotaStudio } from '../utils/penugasanDb.js'
 import * as H from '../utils/kehadiran.js'
+import { wherePengumumanUntuk } from './announcement.js'
 import { lokasiKantor, cekLokasiMasuk, koordinatSah, LABEL_CEK, RADIUS_BAWAAN, RADIUS_MIN, RADIUS_MAX } from '../utils/lokasiKantor.js'
 import { jamKerjaUnit, jadwalUnit, unitPresensi, jadwalKeTeks, validasiJadwal, keMenit, NAMA_HARI } from '../utils/jamKerjaUnit.js'
 import { statusAwal, validasiAturan, hitungLembur, validasiProgres, nilaiLevel, MODE_LEMBUR, MODE_JAM, pilihanMode, PEMBULATAN, ATURAN_BAWAAN } from '../utils/lembur.js'
@@ -604,11 +605,13 @@ export const getKalenderBulan = wrap(async (req, res) => {
   const bulan = req.query.bulan ?? H.hariIniWIB().slice(0, 7)
   if (!bulanOk(bulan)) return gagal(res, 422, 'bulan harus YYYY-MM')
   const awal = bulan + '-01', akhir = new Date(Date.UTC(Number(bulan.slice(0, 4)), Number(bulan.slice(5)), 0)).toISOString().slice(0, 10)
-  const [hk, acara] = await Promise.all([prisma.hariLiburKerja.findMany({ where: { tanggal: { gte: dt(awal), lte: dt(akhir) } }, orderBy: { tanggal: 'asc' } }), prisma.acaraKalender.findMany({ where: { lingkupJenis: web.lingkup.jenis, lingkupId: web.lingkup.id, tanggal: { lte: dt(akhir) } } })])
+  const [hk, acara, info] = await Promise.all([prisma.hariLiburKerja.findMany({ where: { tanggal: { gte: dt(awal), lte: dt(akhir) } }, orderBy: { tanggal: 'asc' } }), prisma.acaraKalender.findMany({ where: { lingkupJenis: web.lingkup.jenis, lingkupId: web.lingkup.id, tanggal: { lte: dt(akhir) } } }),
+    // Event dari Info & Dokumen web pusat yang ditujukan ke orang ini (Karsa, 27 Nov 2026)
+    wherePengumumanUntuk(req.userRoles ?? []).then(w => prisma.announcement.findMany({ where: { ...w, jenis: 'EVENT', tanggalEvent: { gte: dt(awal), lte: dt(akhir) } } }))])
   const hari = []
   for (let t = awal; t <= akhir; t = new Date(dt(t).getTime() + 86400000).toISOString().slice(0, 10)) {
     const k = hk.find(x => ISO(x.tanggal) === t)
-    hari.push({ tanggal: t, jenis: H.jenisHari(t, new Map(hk.map(x => [ISO(x.tanggal), x.jenis]))), label: k?.nama ?? null, catatan: k?.catatan ?? null, acara: acara.filter(a => H.acaraPadaTanggal(a, t)).map(a => ({ id: a.id, judul: a.judul, seharian: a.seharian, mulai: a.mulai, selesai: a.selesai, lokasi: a.lokasi, berulang: a.berulang })) })
+    hari.push({ tanggal: t, jenis: H.jenisHari(t, new Map(hk.map(x => [ISO(x.tanggal), x.jenis]))), label: k?.nama ?? null, catatan: k?.catatan ?? null, acara: [...acara.filter(a => H.acaraPadaTanggal(a, t)).map(a => ({ id: a.id, judul: a.judul, seharian: a.seharian, mulai: a.mulai, selesai: a.selesai, lokasi: a.lokasi, berulang: a.berulang })), ...info.filter(a => ISO(a.tanggalEvent) === t).map(a => ({ id: `info-${a.id}`, judul: a.judul, seharian: !a.jamEvent, mulai: a.jamEvent, lokasi: a.tautan, dariPusat: true }))] })
   }
   return res.json({ success: true, data: { bulan, hari, bisaKelola: atasanWeb(req, web), acara: acara.map(a => ({ id: a.id, judul: a.judul, tanggal: ISO(a.tanggal), seharian: a.seharian, mulai: a.mulai, selesai: a.selesai, lokasi: a.lokasi, deskripsi: a.deskripsi, berulang: a.berulang, berulangDihentikan: ISO(a.berulangDihentikan) })) } })
 })

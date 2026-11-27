@@ -42,7 +42,7 @@ const KEYWORDS = {
   Asset:        'aset inventaris peralatan software akun marketplace lisensi',
   MasterData:   'data master studio circle skb koordinator pendamping bio onboard tambah anggota direktori tim kontak daftar kontak nomor wa telegram struktur tim',
   Health:       'kesehatan ekosistem semangat mood weekly health',
-  Announcement: 'pengumuman info berita notifikasi siaran',
+  Announcement: 'info dokumen pengumuman event kontrak drive tautan berita notifikasi siaran',
   Calendar:     'kalender jadwal event tanggal agenda',
   Panduan:      'panduan cara pakai tutorial mulai bot telegram howto',
   Profile:      'profil saya akun password ubah password foto profil',

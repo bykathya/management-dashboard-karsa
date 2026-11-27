@@ -11,7 +11,7 @@ const PAGE_TITLES = {
   Finance:      'Keuangan',
   SDM:          'SDM',
   Members:      'Anggota',
-  Announcement: 'Pengumuman',
+  Announcement: 'Info & Dokumen',
   Health:       'Kepatuhan Laporan',
   Koperasi:     'Koperasi',
   Payroll:      'Payroll',
