@@ -2878,3 +2878,36 @@ model FfItem {
   @@index([studioId, tahun, bulan])
   @@index([kategoriId])
 }
+
+// MANIFEST bulanan (Karsa Circle, 27 Nov 2026): tiap anggota menulis doa baik, syukur, dan harapan bulan ini di web kerja harian.
+// Bisa diubah selama bulan itu; mulai tanggal 1 bulan berikutnya terkunci. Web pusat merekap semua.
+model Manifest {
+  id        String   @id @default(cuid())
+  userId    String
+  tahun     Int
+  bulan     Int
+  isi       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tahun, bulan])
+  @@index([tahun, bulan])
+}
+
+// SOP & ATURAN per studio (Karsa Circle, 27 Nov 2026): ditulis Koordinator di web kerja harian; semua anggota studio membaca;
+// web pusat lihat saja. kategori: ADMIN (kerja admin & koordinator) | AKUN (menjalankan akun) | ATURAN (do's & don'ts).
+model SopPanduan {
+  id        String   @id @default(cuid())
+  studioId  String
+  kategori  String
+  tag       String?
+  judul     String
+  ket       String?
+  poin      String?
+  urutan    Int      @default(0)
+  olehNama  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studioId, kategori])
+}

@@ -48,6 +48,8 @@ export const NAV = [
       // anak magang melihat data circle). Samain checkMinRole('KADER') di routes/health.js.
       { id: 'Health',       label: 'Kepatuhan Laporan', roles: ROLE_UANG },
       { id: 'Announcement', label: 'Info & Dokumen' },
+      { id: 'Manifest',     label: 'Manifest', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL', 'PENDAMPING', 'KOORDINATOR'] },
+      { id: 'Sop',          label: 'SOP & Aturan', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL', 'PENDAMPING', 'KOORDINATOR'] },
     ],
   },
   {
@@ -89,6 +91,8 @@ export const ICONS = {
   get SDM() { return this.Members },
   get Forecasting() { return this.Finance },
   get DetailKas() { return this.Finance },
+  get Manifest() { return this.Goals },
+  get Sop() { return this.Modul },
   get LaporanMingguan() { return this.Reports },
   get LaporanBulanan() { return this.Reports },
   Panduan: (

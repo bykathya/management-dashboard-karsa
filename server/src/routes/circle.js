@@ -33,6 +33,7 @@ import * as Mn from '../controllers/circleMentor.js'
 import * as Pm from '../controllers/circlePemasukan.js'
 import * as Ds from '../controllers/circleDailySheet.js'
 import { getInfo } from '../controllers/circleInfo.js'
+import * as Ms from '../controllers/manifestSop.js'
 import { authenticate } from '../middleware/auth.js'
 import { populateRoles } from '../middleware/checkRole.js'
 
@@ -330,7 +331,14 @@ router.post('/checkin', authenticate, populateRoles, Kh.kirimCheckIn)
 router.post('/checkin/lewati', authenticate, populateRoles, Kh.lewatiCheckIn)
 router.get('/checkin/tim', authenticate, populateRoles, Kh.getCheckInTim)
 router.get('/kalender', authenticate, populateRoles, Kh.getKalenderBulan)
-router.get('/info', authenticate, populateRoles, getInfo) // Info & Dokumen dari web pusat (Karsa, 27 Nov 2026)
+router.get('/info', authenticate, populateRoles, getInfo)
+// Manifest & SOP (Karsa, 27 Nov 2026)
+router.get('/manifest', authenticate, populateRoles, Ms.manifestStudio)
+router.put('/manifest', authenticate, populateRoles, Ms.tulisManifest)
+router.get('/sop', authenticate, populateRoles, Ms.sopStudio)
+router.post('/sop', authenticate, populateRoles, Ms.tambahSop)
+router.put('/sop/:id', authenticate, populateRoles, Ms.ubahSop)
+router.delete('/sop/:id', authenticate, populateRoles, Ms.hapusSop) // Info & Dokumen dari web pusat (Karsa, 27 Nov 2026)
 router.post('/kalender/acara', authenticate, populateRoles, Kh.buatAcara)
 router.patch('/kalender/acara/:id', authenticate, populateRoles, Kh.ubahAcara)
 router.delete('/kalender/acara/:id', authenticate, populateRoles, Kh.hapusAcara)

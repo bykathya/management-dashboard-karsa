@@ -25,6 +25,8 @@ const KEYWORDS = {
   Dashboard:    'overview dashboard ringkasan finansial total kas dana pe cpm ekuitas runway',
   LaporanMingguan: 'weekly report laporan mingguan studio daily sheet wip revisi admin pic aktivitas',
   LaporanBulanan:  'monthly report laporan bulanan studio cpm pertumbuhan akun lempar kerjaan freelancer',
+  Manifest:     'manifest manifestasi doa syukur harapan bulanan anggota wa',
+  Sop:          'sop aturan panduan kerja admin akun vgen nda qc do dont',
   DetailKas:    'detail kas ekuitas saldo rekening bank screenshot bukti vgen paypal dana pengamanan valid',
   Forecasting:  'financial forecasting forecast ff kas cpm target menabung pos bulanan',
   Finance:      'kas omset target menabung pos rumah rekap bulanan dana pe dana ekosistem dana forum dana berkah dana rumah tangga dana circle setoran pos internal pos eksternal keuangan cpm bulanan ekuitas studio iuran finance',
