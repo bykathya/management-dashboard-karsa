@@ -1627,3 +1627,11 @@ h1, h2, .page-header h1, .login-header h1, .topbar-title, .logo-name { font-fami
   .ff-item > input[type="number"] { grid-column: 2; }
   .ff-item > span:last-child { grid-column: 3; grid-row: 1; }
 }
+
+/* Cetak / PDF laporan studio (Karsa, 27 Nov 2026): tanpa menu & tombol */
+@media print {
+  .sidebar, .topbar, .sidebar-mobile-overlay, .no-print { display: none !important; }
+  .main-area { margin: 0 !important; padding: 0 !important; }
+  .page-content { padding: 0 !important; }
+  .card { break-inside: avoid; }
+}
