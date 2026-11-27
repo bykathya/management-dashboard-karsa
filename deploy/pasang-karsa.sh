@@ -122,6 +122,8 @@ add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Permissions-Policy "camera=(), microphone=(), geolocation=(self)" always;
 EOF
+# Konfigurasi nginx hanya ditulis SEKALI: setelah certbot menambah blok HTTPS, menulis ulang akan menghapusnya.
+if [ ! -f /etc/nginx/sites-available/karsa ]; then
 cat > /etc/nginx/sites-available/karsa <<EOF
 # Web pusat — semua permintaan ke Express (yang juga menyajikan client/dist)
 server {
@@ -170,6 +172,7 @@ server {
     return 301 https://pusat.$DOMAIN\$request_uri;
 }
 EOF
+fi
 ln -sf /etc/nginx/sites-available/karsa /etc/nginx/sites-enabled/karsa
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
@@ -179,7 +182,9 @@ ufw allow 'Nginx Full' >/dev/null
 ufw --force enable
 
 langkah "9/9 HTTPS (gembok)"
-if [ -n "$EMAIL_SSL" ]; then
+if [ -d /etc/letsencrypt/live/pusat.$DOMAIN ]; then
+  echo "HTTPS sudah terpasang."
+elif [ -n "$EMAIL_SSL" ]; then
   certbot --nginx --non-interactive --agree-tos --redirect -m "$EMAIL_SSL" -d pusat.$DOMAIN -d kerja.$DOMAIN -d $DOMAIN -d www.$DOMAIN \
     || echo "!! HTTPS belum berhasil (DNS mungkin belum menyebar). Ulangi nanti: certbot --nginx --redirect -d pusat.$DOMAIN -d kerja.$DOMAIN -d $DOMAIN -d www.$DOMAIN"
 else
