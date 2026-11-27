@@ -479,5 +479,9 @@ router.patch('/daily-sheet/inbox/:id',    authenticate, populateRoles, Ds.ubahIn
 router.delete('/daily-sheet/inbox/:id',   authenticate, populateRoles, Ds.hapusInbox)
 router.post('/daily-sheet/order',         authenticate, populateRoles, Ds.tambahOrder)
 router.patch('/daily-sheet/order/:id',    authenticate, populateRoles, Ds.ubahOrder)
+router.get('/daily-sheet/performa',       authenticate, populateRoles, Ds.muatPerforma)
+router.put('/daily-sheet/performa',       authenticate, populateRoles, Ds.simpanPerforma)
+router.post('/daily-sheet/performa/slip', authenticate, populateRoles, Ds.kirimKeSlip)
+router.post('/daily-sheet/lembur',        authenticate, populateRoles, Ds.catatLembur)
 
 export default router

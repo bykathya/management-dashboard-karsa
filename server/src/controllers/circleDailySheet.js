@@ -6,7 +6,9 @@
 //   • Lempar kerjaan: baris freelance di tim order (AssignmentProduksi tanpa akun) — dibayar lewat Bayar freelance seperti biasa.
 // Hanya pengelola unit (Koordinator, Admin Market terbatas akunnya; pemilik lihat saja). Talent tidak melihat uang (aturan keras 2).
 import prisma from '../prisma.js'
-import { studioBolehDilihat, peranStudio, pastikanTahap, akunUntukOrder, saringAkun, orderDalamAkun } from './circle.js'
+import { studioBolehDilihat, peranStudio, pastikanTahap, akunUntukOrder, saringAkun, orderDalamAkun, peranKerja } from './circle.js'
+import { kelolaStudio } from '../utils/roles.js'
+import { hitungThp } from '../utils/payroll.js'
 import { ORDER_KLIEN, hitungNilaiBersih } from '../utils/produksi.js'
 import { validasiUsd, rupiahDariUsd, KURS_BAWAAN } from '../utils/uang.js'
 import { anggotaStudio } from '../utils/penugasanDb.js'
@@ -226,4 +228,157 @@ export const ubahOrder = async (req, res) => {
     if (jejak.length) await catatAudit(o.id, req.user.id, 'UBAH', jejak)
     return res.json({ success: true, data: { id: o.id } })
   } catch { return gagal(res, 500, 'Gagal mengubah order') }
+}
+
+// ── PERFORMA, BONUS & LEMBUR (Karsa Circle, 27 Nov 2026) ─────────────────────────────────────────────
+// Pendapatan = uang masuk order bulan ini (lunas: nilai order; belum lunas: DP) + tip — sama dengan kotak "Total" di tab Inbox & Order.
+//   Admin: order dari akun yang dipegangnya. Artist: order yang ia kerjakan (dibagi rata bila ada Talent 2).
+// Bonus  = bila target > 0 dan pendapatan ≥ target → dana bonus × persentase; selain itu "SEMANGAT" (0).
+// Komisi = bila target > 0 dan pendapatan > target → (pendapatan − target) × komisi% × kurs; selain itu "KEJAR BONUS DULU YA!" (0).
+// Mengubah setelan & mengirim ke slip = Koordinator ke atas unit (aturan keras 7). Admin unit melihat saja.
+const r0 = (n) => Math.round(Number(n) || 0)
+export function hitungBonusKomisi({ pendapatanUsd, targetUsd, pool, persen, komisiPersen, kurs }) {
+  const ok = targetUsd > 0
+  const bonus = ok && pendapatanUsd >= targetUsd ? r0((pool * persen) / 100) : null
+  const komisi = ok && pendapatanUsd > targetUsd ? r0((pendapatanUsd - targetUsd) * (komisiPersen / 100) * kurs) : null
+  return { bonus, komisi }
+}
+const uangMasukUsd = (o) => (o.statusBayar === 'LUNAS' ? usdOrder(o) : (o.partialUsd ?? 0)) + (o.tipUsd ?? 0)
+const kunciPeriode = (bulan) => { const [t, b] = bulan.split('-').map(Number); return { tahun: t, bulan: b } }
+
+async function hitungPerforma(studioId, bulanKunci) {
+  const rentang = rentangBulan(bulanKunci), { tahun, bulan } = kunciPeriode(bulanKunci)
+  const [setelan, simpanan, orders, adminMarket, anggota, akun, terakhir, aturan, slip, lembur] = await Promise.all([
+    prisma.performaSheet.findUnique({ where: { studioId_tahun_bulan: { studioId, tahun, bulan } } }),
+    prisma.performaOrang.findMany({ where: { studioId, tahun, bulan } }),
+    prisma.orderProduksi.findMany({ where: { ...ORDER_KLIEN, studioId, status: { not: 'BATAL' }, tanggalMasuk: rentang }, select: { akunId: true, nilaiKotor: true, nilaiUsd: true, kurs: true, mataUang: true, statusBayar: true, partialUsd: true, tipUsd: true, assignments: { where: { berhentiPada: null, userId: { not: null } }, select: { userId: true } } } }),
+    prisma.produksiAdminMarket.findMany({ where: { studioId }, select: { userId: true, akunIds: true } }),
+    prisma.userRole.findMany({ where: { studioId, roleType: { not: 'DIGNITY' }, user: { statusAktif: true } }, select: { user: { select: { id: true, nama: true, posisi: true } } } }),
+    prisma.akunProduksi.findMany({ where: { studioId, namaAkun: { not: AKUN_OTOMATIS } }, select: { id: true, namaAkun: true, platform: true }, orderBy: { namaAkun: 'asc' } }),
+    prisma.orderProduksi.findFirst({ where: { studioId, mataUang: 'USD', kurs: { not: null } }, orderBy: { createdAt: 'desc' }, select: { kurs: true } }),
+    prisma.pengaturanLembur.findUnique({ where: { studioId }, select: { mode: true } }),
+    prisma.penggajian.findMany({ where: { studioId, tahun, bulan }, select: { userId: true, status: true } }),
+    prisma.lemburKehadiran.findMany({ where: { studioId, tanggalKerja: { gte: new Date(`${bulanKunci}-01T00:00:00.000Z`), lt: new Date(rentang.lt.getTime() + 7 * 3600000) } }, orderBy: { tanggalKerja: 'desc' }, select: { id: true, userId: true, tanggalKerja: true, menit: true, catatan: true, status: true, nilaiProyek: true, nilaiUsulan: true, sumber: true, ditinjauOleh: true, penggajianId: true } }),
+  ])
+  const orang = new Map(); for (const r of anggota) orang.set(r.user.id, r.user)
+  const set = { poolAdmin: setelan?.poolAdmin ?? 0, poolArtis: setelan?.poolArtis ?? 0, komisiPersen: setelan?.komisiPersen ?? 5, kurs: setelan?.kurs ?? terakhir?.kurs ?? KURS_BAWAAN }
+  const pendAkun = (akunId) => r2(orders.filter(o => o.akunId === akunId).reduce((s, o) => s + uangMasukUsd(o), 0))
+  const pendArtis = (userId) => { let p = 0, n = 0; for (const o of orders) { const t = o.assignments.map(a => a.userId); if (!t.includes(userId)) continue; n++; p += uangMasukUsd(o) / new Set(t).size } return { p: r2(p), n } }
+  const slipDari = (userId) => slip.find(x => x.userId === userId)?.status ?? null
+  // Admin: yang tersimpan + Admin Market unit (akun pertama yang dipegangnya)
+  const adminIds = new Map(simpanan.filter(x => x.jenis === 'ADMIN').map(x => [x.userId, x]))
+  for (const a of adminMarket) if (!adminIds.has(a.userId) && orang.has(a.userId)) adminIds.set(a.userId, { userId: a.userId, akunId: a.akunIds[0] ?? null, targetUsd: 0, persen: 0 })
+  const admin = [...adminIds.values()].filter(x => orang.has(x.userId)).map(x => {
+    const pend = x.akunId ? pendAkun(x.akunId) : 0
+    return { userId: x.userId, nama: orang.get(x.userId).nama, akunId: x.akunId, targetUsd: x.targetUsd, persen: x.persen, pendapatanUsd: pend, slip: slipDari(x.userId),
+      ...hitungBonusKomisi({ pendapatanUsd: pend, targetUsd: x.targetUsd, pool: set.poolAdmin, persen: x.persen, komisiPersen: set.komisiPersen, kurs: set.kurs }) }
+  }).sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+  // Artist: yang tersimpan + siapa pun yang mengerjakan order bulan ini
+  const artisIds = new Map(simpanan.filter(x => x.jenis === 'ARTIS').map(x => [x.userId, x]))
+  for (const o of orders) for (const a of o.assignments) if (!artisIds.has(a.userId) && orang.has(a.userId)) artisIds.set(a.userId, { userId: a.userId, targetUsd: 0, persen: 0 })
+  const artis = [...artisIds.values()].filter(x => orang.has(x.userId)).map(x => {
+    const { p, n } = pendArtis(x.userId)
+    return { userId: x.userId, nama: orang.get(x.userId).nama, peran: orang.get(x.userId).posisi ?? null, jumlahOrder: n, targetUsd: x.targetUsd, persen: x.persen, pendapatanUsd: p, slip: slipDari(x.userId),
+      ...hitungBonusKomisi({ pendapatanUsd: p, targetUsd: x.targetUsd, pool: set.poolArtis, persen: x.persen, komisiPersen: set.komisiPersen, kurs: set.kurs }) }
+  }).sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+  return {
+    tahun, bulan, setelan: set, admin, artis,
+    lembur: lembur.map(l => ({ ...l, nama: orang.get(l.userId)?.nama ?? '—', durasiJam: l.menit ? r2(l.menit / 60) : null })),
+    anggota: [...orang.values()].map(u => ({ id: u.id, nama: u.nama })).sort((a, b) => a.nama.localeCompare(b.nama, 'id')),
+    akun: akun.map(a => ({ id: a.id, nama: a.namaAkun, platform: a.platform })),
+    modeLembur: aturan?.mode ?? null,
+  }
+}
+
+// GET /api/circle/daily-sheet/performa?studioId&bulan=YYYY-MM
+export const muatPerforma = async (req, res) => {
+  try {
+    const { studioId } = req.query
+    if (!rentangBulan(req.query.bulan)) return gagal(res, 422, 'bulan (YYYY-MM) wajib diisi')
+    const p = await akses(req, res, studioId); if (!p) return
+    const koordinator = !p.lihatSaja && (await kelolaStudio(peranKerja(req), studioId))
+    const d = await hitungPerforma(studioId, req.query.bulan)
+    return res.json({ success: true, data: { ...d, bolehUbah: koordinator, bolehCatatLembur: !p.lihatSaja, saya: req.user.id } })
+  } catch { return gagal(res, 500, 'Gagal memuat performa') }
+}
+
+async function koordinatorUnit(req, res, studioId) {
+  const p = await akses(req, res, studioId, true); if (!p) return false
+  if (!(await kelolaStudio(peranKerja(req), studioId))) { gagal(res, 403, 'Target, dana bonus, dan komisi hanya diatur Koordinator unit'); return false }
+  return true
+}
+const angka = (v, maks) => { const n = Number(v); return Number.isFinite(n) && n >= 0 && n <= maks ? n : undefined }
+
+// PUT /api/circle/daily-sheet/performa { studioId, bulan, setelan?: {poolAdmin, poolArtis, komisiPersen, kurs}, orang?: [{userId, jenis, akunId?, targetUsd, persen}] }
+export const simpanPerforma = async (req, res) => {
+  try {
+    const { studioId } = req.body
+    if (!rentangBulan(req.body.bulan)) return gagal(res, 422, 'bulan (YYYY-MM) wajib diisi')
+    if (!(await koordinatorUnit(req, res, studioId))) return
+    const { tahun, bulan } = kunciPeriode(req.body.bulan)
+    const oleh = (await prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true } }))?.nama ?? null
+    if (req.body.setelan) {
+      const s = req.body.setelan, data = {}
+      for (const [k, maks] of [['poolAdmin', 1e10], ['poolArtis', 1e10], ['komisiPersen', 100], ['kurs', 100000]]) {
+        if (s[k] === undefined) continue
+        const n = angka(s[k], maks); if (n === undefined) return gagal(res, 422, `${k} tidak sah`); data[k] = n
+      }
+      await prisma.performaSheet.upsert({ where: { studioId_tahun_bulan: { studioId, tahun, bulan } }, update: { ...data, diubahOleh: oleh }, create: { studioId, tahun, bulan, ...data, diubahOleh: oleh } })
+    }
+    if (Array.isArray(req.body.orang)) {
+      const anggota = await anggotaStudio(studioId)
+      const akunUnit = new Set((await prisma.akunProduksi.findMany({ where: { studioId }, select: { id: true } })).map(a => a.id))
+      for (const o of req.body.orang.slice(0, 100)) {
+        if (!anggota.has(o.userId) || !['ADMIN', 'ARTIS'].includes(o.jenis)) return gagal(res, 422, 'Orang harus anggota unit ini')
+        const targetUsd = angka(o.targetUsd ?? 0, 1e7), persen = angka(o.persen ?? 0, 100)
+        if (targetUsd === undefined || persen === undefined) return gagal(res, 422, 'Target harus angka dolar, persentase 0–100')
+        const akunId = o.jenis === 'ADMIN' && o.akunId && akunUnit.has(o.akunId) ? o.akunId : null
+        const data = { targetUsd, persen, akunId }
+        await prisma.performaOrang.upsert({ where: { studioId_tahun_bulan_userId_jenis: { studioId, tahun, bulan, userId: o.userId, jenis: o.jenis } }, update: data, create: { studioId, tahun, bulan, userId: o.userId, jenis: o.jenis, ...data } })
+      }
+    }
+    return res.json({ success: true, message: 'Tersimpan' })
+  } catch { return gagal(res, 500, 'Gagal menyimpan performa') }
+}
+
+// POST /api/circle/daily-sheet/performa/slip { studioId, bulan } — bonus & komisi bulan itu ditulis ke slip gaji DRAFT tiap orang
+export const kirimKeSlip = async (req, res) => {
+  try {
+    const { studioId } = req.body
+    if (!rentangBulan(req.body.bulan)) return gagal(res, 422, 'bulan (YYYY-MM) wajib diisi')
+    if (!(await koordinatorUnit(req, res, studioId))) return
+    const d = await hitungPerforma(studioId, req.body.bulan)
+    const per = new Map()
+    for (const x of [...d.admin, ...d.artis]) { const a = per.get(x.userId) ?? { nama: x.nama, bonus: 0, komisi: 0 }; a.bonus += x.bonus ?? 0; a.komisi += x.komisi ?? 0; per.set(x.userId, a) }
+    const masuk = [], belumSlip = [], sudahFinal = []
+    for (const [userId, v] of per) {
+      const s = await prisma.penggajian.findFirst({ where: { userId, studioId, tahun: d.tahun, bulan: d.bulan } })
+      if (!s) { if (v.bonus || v.komisi) belumSlip.push(v.nama); continue }
+      if (s.status !== 'DRAFT') { if (v.bonus !== s.bonus || v.komisi !== s.komisi) sudahFinal.push(v.nama); continue }
+      await prisma.penggajian.update({ where: { id: s.id }, data: { bonus: v.bonus, komisi: v.komisi } })
+      const tunj = (await prisma.tunjanganPenggajian.aggregate({ where: { penggajianId: s.id }, _sum: { jumlah: true } }))._sum.jumlah ?? 0
+      const baru = await prisma.penggajian.findUnique({ where: { id: s.id } })
+      await prisma.penggajian.update({ where: { id: s.id }, data: { thp: hitungThp(baru, tunj) } })
+      masuk.push(v.nama)
+    }
+    return res.json({ success: true, data: { masuk, belumSlip, sudahFinal } })
+  } catch { return gagal(res, 500, 'Gagal mengirim ke slip gaji') }
+}
+
+// POST /api/circle/daily-sheet/lembur { studioId, userId, tanggal, catatan, durasiJam?, fee } — dicatat MENUNGGU, Koordinator menyetujui
+// (lewat /lembur/:id/setujui yang sudah ada). Lembur = fee pekerjaan (aturan keras 11): fee usulan disimpan sebagai nilaiUsulan.
+export const catatLembur = async (req, res) => {
+  try {
+    const { studioId, userId } = req.body
+    const p = await akses(req, res, studioId, true); if (!p) return
+    if (!(await anggotaStudio(studioId)).has(userId)) return gagal(res, 422, 'Pilih anggota unit ini')
+    const tanggal = tanggalSah(req.body.tanggal); if (!tanggal) return gagal(res, 422, 'Tanggal harus diisi')
+    const catatan = String(req.body.catatan ?? '').trim().slice(0, 300); if (!catatan) return gagal(res, 422, 'Tulis catatan pekerjaannya')
+    const fee = angka(req.body.fee, 1e8); if (fee === undefined) return gagal(res, 422, 'Fee harus angka Rupiah 0 ke atas')
+    const jam = req.body.durasiJam === '' || req.body.durasiJam == null ? 0 : angka(req.body.durasiJam, 24)
+    if (jam === undefined) return gagal(res, 422, 'Durasi 0–24 jam')
+    const waktu = new Date(`${tanggal}T12:00:00+07:00`)
+    const l = await prisma.lemburKehadiran.create({ data: { userId, studioId, tanggalKerja: new Date(tanggal + 'T00:00:00.000Z'), sumber: 'MANUAL', mulai: waktu, selesai: waktu, menit: Math.round(jam * 60), catatan, status: 'MENUNGGU', nilaiUsulan: r0(fee), nilaiProyek: r0(fee) } })
+    return res.status(201).json({ success: true, data: { id: l.id } })
+  } catch { return gagal(res, 500, 'Gagal mencatat lembur') }
 }
