@@ -33,12 +33,19 @@ export const daftar = wrap(async (req, res) => {
   const sIds = studios.map(s => s.id), cIds = [...new Set(studios.map(s => s.circleId).filter(Boolean))], ruIds = [...new Set(studios.map(s => s.rumahUsahaId).filter(Boolean))]
   const peran = await prisma.userRole.findMany({
     where: { roleType: { not: 'DIGNITY' }, user: { statusAktif: true }, OR: [{ studioId: { in: sIds } }, { roleType: 'KEPALA_CIRCLE', circleId: { in: cIds } }, { roleType: 'KEPALA_RUMAH_USAHA', rumahUsahaId: { in: ruIds } }] },
-    select: { roleType: true, studioId: true, user: { select: { id: true, nama: true, email: true, nomorWa: true, posisi: true, tanggalMasuk: true, namaBank: true, noRekening: true, atasNamaRekening: true } } },
+    select: { roleType: true, studioId: true, user: { select: { id: true, nama: true, email: true, fotoUrl: true, nomorWa: true, posisi: true, tanggalMasuk: true, namaBank: true, noRekening: true, atasNamaRekening: true } } },
   })
   const orang = new Map()
   for (const r of peran) {
-    const x = orang.get(r.user.id) ?? { ...r.user, peranSet: new Set(), studioIds: new Set() }
-    x.peranSet.add(r.roleType); if (r.studioId && sIds.includes(r.studioId)) x.studioIds.add(r.studioId); orang.set(r.user.id, x)
+    const x = orang.get(r.user.id) ?? { ...r.user, peranSet: new Set(), studioIds: new Set(), perStudio: {} }
+    x.peranSet.add(r.roleType)
+    if (r.studioId && sIds.includes(r.studioId)) {
+      x.studioIds.add(r.studioId)
+      // peran di studio itu (Kepala Circle yang juga Koordinator LKID tampil sebagai Koordinator di kartu LKID)
+      const lama = x.perStudio[r.studioId]
+      if (!lama || URUT.indexOf(r.roleType) < URUT.indexOf(lama)) x.perStudio[r.studioId] = r.roleType
+    }
+    orang.set(r.user.id, x)
   }
   const ids = [...orang.keys()]
   const [sdm, dok, prof] = await Promise.all([
@@ -52,7 +59,9 @@ export const daftar = wrap(async (req, res) => {
     return {
       id: x.id, nama: x.nama, email: x.email, nomorWa: x.nomorWa, posisi: x.posisi, tanggalMasuk: x.tanggalMasuk,
       peran: LABEL_PERAN[per[0]] ?? 'Anggota', peranTipe: per[0], manajemen: per.some(r => ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA'].includes(r)),
-      studioIds: [...x.studioIds], fotoUrl: p?.fotoUrl ?? null, ndaUrl: p?.ndaUrl ?? null,
+      studioIds: [...x.studioIds], peranStudio: Object.fromEntries(Object.entries(x.perStudio).map(([sid, t]) => [sid, { tipe: t, label: LABEL_PERAN[t] ?? 'Anggota' }])),
+      // foto yang diunggah di web pusat (Profil saya) didahulukan; tautan foto dari web kerja jadi cadangan
+      fotoUrl: x.fotoUrl || p?.fotoUrl || null, ndaUrl: p?.ndaUrl ?? null,
       kontrakMulai: s?.kontrakMulai ?? null, kontrakAkhir: s?.kontrakAkhir ?? null, catatan: s?.catatan ?? null,
       namaBank: x.namaBank, noRekening: x.noRekening, atasNamaRekening: x.atasNamaRekening,
       dokumen: Object.fromEntries(JENIS_DOK.map(j => [j, dok.find(d => d.userId === x.id && d.jenis === j) ?? null])),
