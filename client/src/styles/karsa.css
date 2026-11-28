@@ -223,3 +223,15 @@
 @media (max-width: 1200px) { .kd .enam { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .kd .enam { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kd .enam b { font-size: 22px; } }
 .kd .stat.lime .bar i, .kd .stat.pink .bar i { background: #111; }
+
+/* Info & Dokumen */
+.kd .tab-info { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.kd .tab-info button { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); font-weight: 600; cursor: pointer; }
+.kd .tab-info button.on { background: #111; color: var(--accent); }
+.kd .tab-info input { margin-left: auto; min-height: 42px; border: 1.5px solid var(--line); border-radius: 999px; padding: 0 16px; font: inherit; background: var(--bg-input, var(--bg-card)); color: var(--text); flex: 0 1 300px; min-width: 0; }
+.kd .post { background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 22px; padding: 18px 20px; margin-top: 12px; }
+.kd .post h3 { margin: 6px 0 4px; font-family: var(--font-judul); font-weight: 600; font-size: 17px; color: var(--text); }
+.kd .post p { margin: 6px 0; color: var(--text-secondary); white-space: pre-line; line-height: 1.6; }
+.kd .lbl-j { display: inline-block; padding: 3px 12px; border-radius: 999px; border: 1.5px solid var(--line); font-size: 12.5px; font-weight: 700; color: #111; background: #fff; }
+.kd .j-PENGUMUMAN { background: var(--accent); } .kd .j-EVENT { background: var(--pink-candy); } .kd .j-KONTRAK { background: var(--kd-kuning); }
+.kd .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-muted); align-items: center; }
