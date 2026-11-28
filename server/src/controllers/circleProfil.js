@@ -14,13 +14,23 @@ const URUT = ['KEPALA_CIRCLE', 'KOORDINATOR', 'PENDAMPING', 'ADMIN_FUNGSIONAL', 
 export const STATUS = ['JOMBLO', 'TAKEN', 'RAHASIA']
 export const ZODIAK = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagitarius', 'Capricorn', 'Aquarius', 'Pisces']
 const tautanSah = (s) => /^https?:\/\/[^\s]+$/i.test(s)
+// Tautan foto (28 Nov 2026): tautan berbagi Google Drive diubah jadi tautan gambar; halaman profil Instagram
+// bukan gambar (tampil rusak), jadi ditolak dengan penjelasan.
+export function rapikanFoto(foto) {
+  if (!foto) return { foto: null }
+  if (!tautanSah(foto)) return { galat: 'Foto harus berupa tautan yang diawali http:// atau https://' }
+  if (/^https?:\/\/(www\.)?instagram\.com\//i.test(foto)) return { galat: 'Link Instagram tidak bisa dipakai sebagai foto. Pakai link Google Drive (dibagikan ke siapa saja yang memiliki link) atau link gambar langsung.' }
+  const drive = foto.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]{10,})/i)
+  if (drive) return { foto: `https://drive.google.com/thumbnail?id=${drive[1]}&sz=w400` }
+  return { foto }
+}
 const teks = (v, n) => { const t = String(v ?? '').trim(); return t ? t.slice(0, n) : null }
 const empatAkhir = (s) => (s ? String(s).replace(/\s/g, '').slice(-4) : null)
 const FUN = { fotoUrl: true, bio: true, keahlian: true, zodiak: true, ulangTahun: true, jamAktif: true, status: true, instagram: true }
 
 export function rapikanProfil(body) {
   const out = {}
-  const foto = teks(body.fotoUrl, 500); if (foto && !tautanSah(foto)) return { galat: 'Foto harus berupa tautan yang diawali http:// atau https://' }; out.fotoUrl = foto
+  const f = rapikanFoto(teks(body.fotoUrl, 500)); if (f.galat) return { galat: f.galat }; out.fotoUrl = f.foto
   out.bio = teks(body.bio, 300)
   out.keahlian = teks(body.keahlian, 200)
   const z = teks(body.zodiak, 20); if (z && !ZODIAK.includes(z)) return { galat: 'Zodiak tidak dikenal' }; out.zodiak = z
@@ -46,7 +56,7 @@ export const getProfilSaya = wrap(async (req, res) => {
   return res.json({ success: true, data: {
     tentang: Object.fromEntries(Object.keys(FUN).map(k => [k, p?.[k] ?? ''])),
     ndaUrl: p?.ndaUrl ?? null,
-    resmi: { nama: u.nama, email: u.email, foto: p?.fotoUrl || u.fotoUrl || null, nomorWa: u.nomorWa, posisi: u.posisi, tanggalLahir: u.tanggalLahir, bank: u.namaBank, rekening4: empatAkhir(u.noRekening), atasNama: u.atasNamaRekening },
+    resmi: { nama: u.nama, email: u.email, foto: u.fotoUrl || p?.fotoUrl || null, nomorWa: u.nomorWa, posisi: u.posisi, tanggalLahir: u.tanggalLahir, bank: u.namaBank, rekening4: empatAkhir(u.noRekening), atasNama: u.atasNamaRekening },
     pilihan: { zodiak: ZODIAK, status: STATUS },
     kerja: { studio: [...new Set(peran.map(r => r.studio?.nama).filter(Boolean))], peran: [...new Set(peran.map(r => PERAN[r.roleType]).filter(Boolean))], tanggalMasuk: u.tanggalMasuk, kontrakMulai: sdm?.kontrakMulai ?? null, kontrakAkhir: sdm?.kontrakAkhir ?? null },
     dokumen: Object.fromEntries(['KTP', 'NDA', 'SKCK', 'BANK'].map(j => [j, dok.some(d => d.jenis === j)])),
@@ -82,7 +92,7 @@ export const getTimKartu = wrap(async (req, res) => {
     return {
       userId: x.id, nama: x.nama, peran: x.posisi || PERAN[x.peran.sort((a, b) => URUT.indexOf(a) - URUT.indexOf(b))[0]] || 'Anggota', saya: x.id === req.user.id,
       ...Object.fromEntries(Object.keys(FUN).map(k => [k, p?.[k] ?? null])),
-      fotoUrl: p?.fotoUrl || x.fotoUrl || null, // foto profil web pusat bila tautan foto belum diisi (28 Nov 2026)
+      fotoUrl: x.fotoUrl || p?.fotoUrl || null, // foto unggahan web pusat didahulukan, tautan foto web kerja jadi cadangan (28 Nov 2026)
       ...(bolehNda ? { ndaUrl: p?.ndaUrl ?? null, ndaBisaUbah: pengelola } : {}),
     }
   })
