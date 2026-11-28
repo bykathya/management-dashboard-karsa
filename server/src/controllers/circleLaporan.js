@@ -42,7 +42,7 @@ export const getBeranda = wrap(async (req, res) => {
   const hari = hariIniWIB(), sekarang = new Date(), jam = Number(new Date(sekarang.getTime() + 7 * 3600000).toISOString().slice(11, 13))
   const saya = await prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, fotoUrl: true } })
   const nama = saya?.nama ?? ''
-  const foto = (await prisma.profilAnggota.findUnique({ where: { userId: req.user.id }, select: { fotoUrl: true } }))?.fotoUrl || saya?.fotoUrl || null
+  const foto = saya?.fotoUrl || (await prisma.profilAnggota.findUnique({ where: { userId: req.user.id }, select: { fotoUrl: true } }))?.fotoUrl || null
   const milik = lihatSemua ? {} : { OR: [{ penugasanTahap: { some: { userId: req.user.id } } }, { assignments: { some: { userId: req.user.id, berhentiPada: null } } }] }
   // Tugasku = definisi yang SAMA dengan menu Tugas saya (`antreanSaya`) — dulu dari PenugasanTahap saja sehingga bisa 0 padahal ada tugas
   const [antreanku, selesaiHariIni, aktif] = await Promise.all([
