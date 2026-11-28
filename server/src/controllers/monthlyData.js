@@ -192,7 +192,7 @@ export const getMonthlySummary = async (req, res) => {
       for (const r of snapshot) if (r.kasSekarang != null) kasMap[r.studioId] = r.kasSekarang
     }
 
-    let totalKas = 0, totalOmsetIdr = 0, totalCpm = 0, totalEkuitas = 0, totalPengeluaran = 0
+    let totalKas = 0, totalOmsetIdr = 0, totalOmsetUsd = 0, totalCpm = 0, totalEkuitas = 0, totalPengeluaran = 0
     const totalStudio  = studios.filter(s => s.tipe === 'STUDIO').length
     const totalProject = studios.filter(s => s.tipe === 'PROJECT').length
     const totalKorporasi = studios.filter(s => s.tipe === 'KORPORASI').length
@@ -217,6 +217,7 @@ export const getMonthlySummary = async (req, res) => {
       const pengeluaran = reps.reduce((a, r) => a + (r.pengeluaran ?? 0), 0)
       totalKas          += kasAkhir
       totalOmsetIdr     += omsetIdr
+      totalOmsetUsd     += reps.reduce((a, r) => a + r.totalUsd, 0)
       totalCpm          += cpmMap[s.id]?.totalCpm ?? 0
       totalEkuitas      += ekuitasMap[s.id] ?? 0
       totalPengeluaran  += pengeluaran
@@ -259,6 +260,9 @@ export const getMonthlySummary = async (req, res) => {
         totalEkuitasPE,
         totalCpm, totalStudio, totalProject, totalKorporasi, totalAnggota, rumahUsaha,
         runway: totalCpm > 0 ? totalEkuitasUsaha / totalCpm : 0,
+        // Overview (desain Karsa 28 Nov 2026): Global Revenue + kurs yang dipakai (laporan terakhir, bawaan 17.000).
+        totalOmsetIdr, totalOmsetUsd,
+        kurs: (await prisma.weeklyReport.findFirst({ where: { kurs: { gt: 0 } }, orderBy: { periodeAwal: 'desc' }, select: { kurs: true } }))?.kurs ?? 17000,
         perStudio,
         lingkup: infoLingkup(lingkup),
       },

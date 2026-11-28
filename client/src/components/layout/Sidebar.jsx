@@ -1,4 +1,7 @@
-import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL, FITUR } from '../../config/ecosystem'
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
+import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL, FITUR, WEB_KERJA } from '../../config/ecosystem'
+import { usePasangAplikasi } from '../../utils/pasangAplikasi'
 import { onActivate } from '../../utils/a11y'
 import { ROLE_UANG, ROLE_FF } from '../../utils/roles'
 import { useTema } from '../../utils/tema'
@@ -330,71 +333,103 @@ function WeeklyWidget({ onNavigate, badges, user }) {
   )
 }
 
-export default function Sidebar({ active, onNavigate, user, badges = {}, isOpen, onClose }) {
+// MENU sesuai desain yang disepakati (28 Nov 2026, desain/ringkasan/bersama.js). Izin tiap item tetap dari NAV di atas
+// (server tetap memeriksa). Menu lama yang tidak ada di desain dikumpulkan di "Lainnya" supaya tetap bisa dibuka.
+const MENU_KD = [
+  ['Executive', ['Performance', 'Dashboard', 'Forecasting']],
+  ['Ringkasan', ['Panduan', 'WebCircle', 'Calendar']],
+  ['Operasional', ['Announcement', '@daily', 'LaporanMingguan', 'LaporanBulanan', 'Manifest', 'Sop', 'HrDatabase', 'Finance']],
+  ['Unit Usaha', ['MasterData', 'Reports']],
+]
+const LABEL_KD = { Sop: 'SOP & Aturan Studio' }
+// Halaman yang dibuka dari halaman lain: menu induknya ikut menyala.
+const INDUK = { DetailKas: 'Dashboard', WeeklyReport: 'Finance', Koperasi: 'Finance', Payroll: 'SDM', Members: 'SDM', Kader: 'SDM', Rekrutmen: 'SDM' }
+const ROLE_DAILY = ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'PENDAMPING', 'KOORDINATOR', 'ADMIN_FUNGSIONAL']
 
+function TombolInstall() {
+  const { bisa, pasang } = usePasangAplikasi()
+  const [buka, setBuka] = useState(false)
+  return (
+    <>
+      <button type="button" className="kd-mn" onClick={() => setBuka(true)}>⤓ Install App</button>
+      {buka && createPortal(
+        <div role="dialog" aria-label="Pasang sebagai aplikasi" onClick={() => setBuka(false)} style={{ position: 'fixed', inset: 0, background: 'var(--backdrop)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" onClick={e => e.stopPropagation()} style={{ maxWidth: 440, borderRadius: 26 }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: 20 }}>Pasang sebagai aplikasi</h2>
+            <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)' }}>Web pusat bisa dipasang di laptop atau HP seperti aplikasi: punya ikon sendiri dan terbuka tanpa bilah browser.</p>
+            <ol style={{ margin: '0 0 16px', paddingLeft: 20, lineHeight: 1.7 }}>
+              <li><b>Laptop (Chrome/Edge):</b> klik tombol Pasang di bawah.</li>
+              <li><b>Android:</b> menu ⋮ → <i>Tambahkan ke layar utama</i>.</li>
+              <li><b>iPhone (Safari):</b> tombol Bagikan → <i>Tambah ke Layar Utama</i>.</li>
+            </ol>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setBuka(false)}>Nanti</button>
+              {bisa && <button className="btn btn-primary btn-sm" onClick={async () => { await pasang(); setBuka(false) }}>Pasang</button>}
+            </div>
+            {!bisa && <p style={{ margin: '10px 0 0', fontSize: 12.5, color: 'var(--text-muted)' }}>Kalau tombol Pasang tidak muncul, web ini sudah terpasang atau browsernya memakai cara di atas.</p>}
+          </div>
+        </div>, document.body)}
+    </>
+  )
+}
+
+function TombolTema() {
+  const [tema, aturTema] = useTema()
+  const gelap = tema === 'dark'
+  return <button type="button" className="kd-mn" role="switch" aria-checked={gelap} onClick={() => aturTema(gelap ? 'light' : 'dark')}>◐ {gelap ? 'Mode terang' : 'Mode gelap'}</button>
+}
+
+export default function Sidebar({ active, onNavigate, user, badges = {}, isOpen, onClose }) {
+  const punya = (roles) => roles.some(r => user?.roles?.some(ur => ur.roleType === r))
+  // Item yang boleh dibuka pengguna ini (aturan sama dengan menu lama).
+  const boleh = new Map()
+  NAV.filter(g => !g.roles || punya(g.roles)).forEach(g => g.items.forEach(item => {
+    if ((!item.fitur || FITUR[item.fitur]) && (!item.roles || punya(item.roles) || (item.superOverride && user?.isProduksiSuperUser))) boleh.set(item.id, item)
+  }))
+  const dipakai = new Set(MENU_KD.flatMap(([, ids]) => ids))
+  const lainnya = [...boleh.values()].filter(it => !dipakai.has(it.id))
+  const nyala = INDUK[active] ?? active
+  const Tombol = ({ item }) => (
+    <button type="button" className={`kd-mn${nyala === item.id ? ' on' : ''}`} aria-current={nyala === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
+      <span style={{ flex: 1 }}>{LABEL_KD[item.id] ?? item.label}</span>
+      {badges[item.id] ? <span className="kd-badge" title={`${badges[item.id]} perlu ditindaklanjuti`}>{badges[item.id]}</span> : null}
+    </button>
+  )
   return (
     <>
       {isOpen && <div className="sidebar-mobile-overlay" onClick={onClose} />}
     <aside className={`sidebar${isOpen ? ' sidebar--open' : ''}`}>
-      <div className="sidebar-logo">
-        <div className="logo-mark">{ECOSYSTEM_NAME[0]}</div>
-        <div className="logo-text-group">
-          <div className="logo-name">{ECOSYSTEM_NAME}</div>
-          <div className="logo-sub">Ecosystem</div>
-        </div>
+      <div className="kd-brand">
+        <div className="kd-logo">{ECOSYSTEM_NAME[0]}</div>
+        <div><b>{ECOSYSTEM_NAME_FULL}</b><small>Web pusat</small></div>
       </div>
 
-      <nav className="sidebar-nav">
-        {NAV
-          .filter(group => !group.roles || group.roles.some(r => user?.roles?.some(ur => ur.roleType === r)))
-          .map(group => ({
-            ...group,
-            // item.superOverride: item ini juga kebuka kalau user.isProduksiSuperUser true (role
-            // asli SUPER_ADMIN ATAU ada baris ProduksiSuperOverride, dihitung server-side di
-            // login()/me()) -- KHUSUS Produksi & Payroll, item roles-restricted lain (mis. Kader,
-            // Rekrutmen, Asset) TIDAK ikut kebuka cuma karena flag ini.
-            items: group.items.filter(item =>
-              (!item.fitur || FITUR[item.fitur]) && (
-              !item.roles ||
-              item.roles.some(r => user?.roles?.some(ur => ur.roleType === r)) ||
-              (item.superOverride && user?.isProduksiSuperUser))
-            ),
-          }))
-          .filter(group => group.items.length > 0)
-          .map(group => (
-          <div key={group.section}>
-            <div className="nav-section">{group.section}</div>
-            {group.items.map(item => (
-              <button key={item.id}
-                className={`nav-item ${active === item.id ? 'active' : ''}`}
-                onClick={() => onNavigate(item.id)}
-              >
-                <span className="nav-icon">{ICONS[item.id]}</span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {badges[item.id] ? (
-                  <span className="nav-badge" title={item.id === 'Finance' ? `${badges[item.id]} perlu ditindaklanjuti (laporan omset belum masuk / setoran koperasi menunggu)` : item.id === 'SDM' ? `${badges[item.id]} calon rekrutmen menunggu diproses` : `${badges[item.id]} menunggu`}>{badges[item.id]}</span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        ))}
-
-        <WeeklyWidget onNavigate={onNavigate} badges={badges} user={user} />
+      <nav className="sidebar-nav" style={{ padding: '0 12px 12px', gap: 3 }}>
+        {MENU_KD.map(([grup, ids]) => {
+          const isi = ids.filter(id => id === '@daily' ? punya(ROLE_DAILY) : boleh.has(id))
+          if (!isi.length) return null
+          return (
+            <div key={grup} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div className="kd-grp">{grup}</div>
+              {isi.map(id => id === '@daily'
+                ? <a key={id} className="kd-mn" href={WEB_KERJA} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }} title="Buka Daily Sheet di web kerja">Daily Sheet ↗</a>
+                : <Tombol key={id} item={boleh.get(id)} />)}
+            </div>
+          )
+        })}
+        {lainnya.length > 0 && (
+          <details className="kd-lainnya" open={lainnya.some(it => it.id === nyala) || undefined}>
+            <summary className="kd-grp">Lainnya ▾</summary>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {lainnya.map(item => <Tombol key={item.id} item={item} />)}
+            </div>
+          </details>
+        )}
       </nav>
 
-      <div className="sidebar-footer">
-        <SaklarTema />
-        <div className="user-card" onClick={() => onNavigate('Profile')}
-          role="button" tabIndex={0} onKeyDown={onActivate(() => onNavigate('Profile'))}
-          style={{ cursor: 'pointer' }}>
-          <div className="user-avatar">{initials(user?.nama)}</div>
-          <div className="user-info">
-            <div className="user-name">{user?.nama ?? ECOSYSTEM_NAME_FULL}</div>
-            <div className="user-role">
-              {user?.roles?.[0]?.roleType?.replace(/_/g, ' ') ?? 'v1.0 · Fase 1B'}
-            </div>
-          </div>
-        </div>
+      <div style={{ padding: '12px 12px 16px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <TombolInstall />
+        <TombolTema />
       </div>
     </aside>
     </>

@@ -3,7 +3,9 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import api from './services/api'
 import LoginPage from './pages/Auth/LoginPage'
 import Sidebar from './components/layout/Sidebar'
-import Topbar from './components/layout/Topbar'
+import Topbar, { PAGE_TITLES } from './components/layout/Topbar'
+// Halaman lama tanpa judul sendiri: judulnya ditulis kerangka (bilah atas baru tidak memuat judul).
+const JUDUL_DARI_KERANGKA = new Set(['Calendar', 'Kader', 'Members', 'Profile', 'SDM'])
 import CommandPalette from './components/common/CommandPalette'
 import { FITUR } from './config/ecosystem'
 
@@ -287,11 +289,12 @@ function AppShell() {
   const goProfile = () => navigate('Profile')
 
   return (
-    <div className="app">
+    <div className="app kd-app">
       <Sidebar active={active} onNavigate={navigate} user={user} badges={badges} isOpen={sidebarOpen} onClose={() => setSidebar(false)} />
       <div className="main-area">
         <Topbar title={active} user={user} onLogout={logout} onProfile={goProfile} onMenuOpen={() => setSidebar(true)} onNavigate={navigate} badges={badges} onOpenSearch={() => setSearchOpen(true)} />
         <div className="page-content">
+          {JUDUL_DARI_KERANGKA.has(active) && <div className="kd"><div className="kepala" style={{ marginBottom: 20 }}><h1>{PAGE_TITLES[active] ?? active}</h1></div></div>}
           <PageErrorBoundary key={active}>
             <Suspense fallback={<PageFallback />}>
               <Page
