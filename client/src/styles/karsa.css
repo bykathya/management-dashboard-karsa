@@ -283,3 +283,15 @@
 .kd .sop-item { margin-bottom: 10px; }
 .kd .sop-item > button { display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left; background: none; border: 0; padding: 16px 20px; color: var(--text); cursor: pointer; font: inherit; }
 .kd .sop-item ul { margin: 0 20px 10px 68px; padding-left: 18px; line-height: 1.7; }
+
+/* HR & Database */
+.kd .jenis-pil { min-height: 44px; border: 1.5px solid var(--line); border-radius: 14px; padding: 0 14px; font: inherit; background: var(--bg-card); color: var(--text); min-width: 150px; }
+.kd .hr-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.kd .hr-kartu { border: 1.5px solid var(--line); border-radius: 22px; }
+.kd .hr-foto { height: 170px; background: var(--bg-primary); border-bottom: 1.5px solid var(--line); }
+.kd .hr-bulat { width: 144px; height: 144px; border-radius: 50%; border: 2px solid var(--line); overflow: hidden; display: block; }
+.kd .hr-bulat img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kd .hr-tag { top: 12px; left: 10px; font-size: 12px; }
+.kd .hr-tag.kanan { left: auto; right: 10px; background: var(--bg-card); }
+.kd .hr-dok { font-size: 12px; padding: 2px 9px; border: 1.5px solid var(--line); background: var(--pink-candy); color: #111; }
+.kd .hr-dok.ada { background: var(--accent); color: #111; }
