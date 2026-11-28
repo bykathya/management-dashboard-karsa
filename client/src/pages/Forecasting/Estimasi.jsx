@@ -97,6 +97,7 @@ export default function Estimasi({ daftarStudio, onNavigate }) {
                   <span className="chip" style={{ background: 'var(--accent)', color: '#111' }}>Lunas: {formatRp(lunas)}</span>
                   <span className="chip" style={{ background: 'var(--pink-candy)', color: '#111' }}>Belum: {formatRp(total - lunas)}</span>
                   <button type="button" className="kecil" onClick={() => setFormKat(true)}>+ Kategori</button>
+                  {!d.kategori.some(k => k.nama === 'Mentor') && <button type="button" className="kecil" title="Tambah kategori Mentor berisi gaji tiap mentor studio (dari Penggajian web kerja)" onClick={() => aksi(() => api.post('/api/ff/mentor', { studioId, ...periode }), true)}>+ Gaji Mentor</button>}
                   <button type="button" className="kecil" onClick={() => { const buka = Object.values(tutup).some(Boolean); setTutup(Object.fromEntries(d.kategori.map(k => [k.id, !buka]))) }}>{Object.values(tutup).some(Boolean) ? 'Buka semua' : 'Lipat semua'}</button>
                 </div>
                 {formKat && (

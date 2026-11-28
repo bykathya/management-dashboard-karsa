@@ -14,9 +14,9 @@ const teks = (v, n) => { const t = String(v ?? '').trim(); return t ? t.slice(0,
 export const bulanIniWib = () => { const d = new Date(Date.now() + 7 * 3600000); return { tahun: d.getUTCFullYear(), bulan: d.getUTCMonth() + 1 } }
 const batasLabel = ({ tahun, bulan }) => { const n = bulan === 12 ? { t: tahun + 1, b: 1 } : { t: tahun, b: bulan + 1 }; return `${n.t}-${String(n.b).padStart(2, '0')}-01` }
 async function anggotaAktif(studioId) {
-  const r = await prisma.userRole.findMany({ where: { studioId, roleType: { not: 'DIGNITY' }, user: { statusAktif: true } }, select: { user: { select: { id: true, nama: true } } } })
-  const m = new Map(); for (const x of r) m.set(x.user.id, x.user.nama)
-  return [...m].map(([id, nama]) => ({ id, nama })).sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+  const r = await prisma.userRole.findMany({ where: { studioId, roleType: { not: 'DIGNITY' }, user: { statusAktif: true } }, select: { user: { select: { id: true, nama: true, fotoUrl: true } } } })
+  const m = new Map(); for (const x of r) m.set(x.user.id, { nama: x.user.nama, foto: x.user.fotoUrl ?? null })
+  return [...m].map(([id, v]) => ({ id, ...v })).sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
 }
 
 // ── Web kerja harian ──────────────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ export const manifestStudio = wrap(async (req, res) => {
   const tim = await anggotaAktif(studioId)
   const isi = await prisma.manifest.findMany({ where: { ...p, userId: { in: [...tim.map(t => t.id), req.user.id] } } })
   const peta = new Map(isi.map(m => [m.userId, m]))
-  return res.json({ success: true, data: { ...p, batas: batasLabel(p), saya: { userId: req.user.id, isi: peta.get(req.user.id)?.isi ?? null, diubah: peta.get(req.user.id)?.updatedAt ?? null },
+  return res.json({ success: true, data: { ...p, batas: batasLabel(p), saya: { userId: req.user.id, foto: tim.find(t => t.id === req.user.id)?.foto ?? (await prisma.user.findUnique({ where: { id: req.user.id }, select: { fotoUrl: true } }))?.fotoUrl ?? null, isi: peta.get(req.user.id)?.isi ?? null, diubah: peta.get(req.user.id)?.updatedAt ?? null },
     tim: tim.filter(t => t.id !== req.user.id).map(t => ({ ...t, isi: peta.get(t.id)?.isi ?? null })), jumlahTim: tim.length, sudah: tim.filter(t => peta.has(t.id)).length } })
 })
 // PUT /api/circle/manifest { isi } — selalu untuk bulan berjalan

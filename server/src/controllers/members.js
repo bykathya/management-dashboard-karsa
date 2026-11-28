@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import { parsePagination, SUPER_ADMIN, hasAnyRole, ROLE_LEVEL, canManageMember, canManageStudio, canManageStudioRoles, bestLevel, canAssignScope, scopeArgs } from '../utils/roles.js'
 import { computeTotalKompensasi } from '../utils/compensation.js'
+import { terapkanThpFf } from '../utils/thpFf.js'
 
 // Posisi level-studio (bukan hierarki organisasi lintas-studio) -- KOORDINATOR & PENDAMPING
 // dianggap SEJAJAR di studio yang sama-sama mereka kelola, walau ROLE_LEVEL taruh PENDAMPING
@@ -176,7 +177,8 @@ export const getById = async (req, res) => {
       },
     })
     if (!user) return res.status(404).json({ success: false, message: 'Anggota tidak ditemukan' })
-    return res.json({ success: true, data: { ...user, ...computeTotalKompensasi(user.roles, user.studioPemilik) } })
+    const roles = user.roles ? await terapkanThpFf(user.id, user.roles) : user.roles
+    return res.json({ success: true, data: { ...user, ...(roles && { roles }), ...computeTotalKompensasi(roles ?? [], user.studioPemilik) } })
   } catch {
     return res.status(500).json({ success: false, message: 'Gagal mengambil data anggota' })
   }

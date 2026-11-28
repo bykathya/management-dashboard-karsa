@@ -255,9 +255,7 @@ export default function StudioBioAnggota({ studio, canEdit, studios, users, onNa
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{u.nama}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       {ROLE_LABEL[roleType] ?? roleType}
-                      {studioRole?.takeHomePay != null && (
-                        <span style={{ color: 'var(--green)' }}> · THP {formatRp(studioRole.takeHomePay)}</span>
-                      )}
+                      {/* THP kini diambil dari Financial Forecasting (28 Nov 2026), tidak diisi di sini */}
                     </div>
                   </div>
                   {u.nomorWa && (
@@ -266,14 +264,6 @@ export default function StudioBioAnggota({ studio, canEdit, studios, users, onNa
                       style={{ fontSize: 11, color: 'var(--accent-light)', textDecoration: 'none', flexShrink: 0 }}>
                       WA
                     </a>
-                  )}
-                  {canEdit && studioRole && (
-                    <span
-                      onClick={e => { e.stopPropagation(); thpEditingUserId === u.id ? setThpEditingUserId(null) : openThpEdit(u, studioRole) }}
-                      style={{ fontSize: 11, color: thpEditingUserId === u.id ? 'var(--text)' : 'var(--green)', fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}
-                    >
-                      {thpEditingUserId === u.id ? 'Batal' : 'THP'}
-                    </span>
                   )}
                   {canEdit && studioRole && (
                     <span

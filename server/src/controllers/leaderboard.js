@@ -32,7 +32,7 @@ export const getLeaderboard = async (req, res) => {
     const { rangeEnd } = getMonthAttributionRange(bulan, tahun)
 
     const [studios, semuaLaporan] = await Promise.all([
-      prisma.studio.findMany({ where: { statusAktif: true, ...STUDIO_DIHITUNG, ...(lingkup.semua ? {} : { id: { in: [...lingkup.studioIds] } }) }, select: { id: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true } } } } } }),
+      prisma.studio.findMany({ where: { statusAktif: true, ...STUDIO_DIHITUNG, ...(lingkup.semua ? {} : { id: { in: [...lingkup.studioIds] } }) }, select: { id: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true, fotoUrl: true } } } } } }),
       prisma.weeklyReport.findMany({
         where: { ...LAPORAN_DIHITUNG, ...filterStudioId(lingkup) },
         select: { studioId: true, periodeAwal: true, periodeAkhir: true, totalUsd: true, kurs: true, ...Object.fromEntries(KOLOM.map(k => [k.kolom, true])) },
@@ -53,7 +53,7 @@ export const getLeaderboard = async (req, res) => {
     const studioRank = studios.map(s => {
       const reps = laporanBulan.filter(r => r.studioId === s.id), repsLalu = laporanLalu.filter(r => r.studioId === s.id)
       const usd = r2(reps.reduce((a, r) => a + r.totalUsd, 0)), usdLalu = r2(repsLalu.reduce((a, r) => a + r.totalUsd, 0))
-      return { studioId: s.id, nama: s.nama, koordinator: s.userRoles.map(r => r.user?.nama).filter(Boolean).join(', ') || null, usd, idr: Math.round(reps.reduce((a, r) => a + r.totalUsd * r.kurs, 0)), usdLalu, jumlahLaporan: reps.length }
+      return { studioId: s.id, nama: s.nama, koordinator: s.userRoles.map(r => r.user?.nama).filter(Boolean).join(', ') || null, koordinatorFoto: s.userRoles.find(r => r.user?.fotoUrl)?.user.fotoUrl ?? null, usd, idr: Math.round(reps.reduce((a, r) => a + r.totalUsd * r.kurs, 0)), usdLalu, jumlahLaporan: reps.length }
     }).sort((a, b) => b.usd - a.usd || a.nama.localeCompare(b.nama))
 
     // ATH / ATL per bulan (hanya bulan yang punya laporan)

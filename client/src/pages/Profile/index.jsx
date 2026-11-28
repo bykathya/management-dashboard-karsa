@@ -136,6 +136,7 @@ export default function Profile({ onNavigate }) {
   const [nomorBpjs,        setBpjs]     = useState('')
   const [saving,           setSaving]   = useState(false)
   const [profileMsg,       setProfileMsg] = useState(null)
+  const [tentang,          setTentang]  = useState(null)
 
   // Password form
   const [pwLama, setPwLama]   = useState('')
@@ -161,6 +162,7 @@ export default function Profile({ onNavigate }) {
         setAtasNama(r.data.data.atasNamaRekening ?? '')
         setNik(r.data.data.nik ?? '')
         setBpjs(r.data.data.nomorBpjs ?? '')
+        setTentang(r.data.data.tentang ?? null)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -184,6 +186,7 @@ export default function Profile({ onNavigate }) {
         atasNamaRekening: atasNamaRekening || null,
         nik: nik || null,
         nomorBpjs: nomorBpjs || null,
+        ...(tentang && { tentang }),
       })
       setProfile(prev => ({ ...prev, ...r.data.data }))
       setProfileMsg({ type: 'success', text: 'Profil berhasil diperbarui!' })
@@ -215,194 +218,18 @@ export default function Profile({ onNavigate }) {
   )
 
   const color = avatarColor(profile?.roles)
+  const t = tentang ?? {}
+  const ubahT = (k) => (e) => setTentang({ ...t, [k]: e.target.value })
+  const totalThp = (profile?.roles ?? []).reduce((a, r) => a + (r.studio && r.takeHomePay ? r.takeHomePay : 0), 0)
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto' }}>
-      {/* Profile Card */}
-      <div className="card" style={{ marginBottom: 20, padding: 28 }}>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: 18, background: color,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 26, fontWeight: 800, color: '#fff', flexShrink: 0,
-            boxShadow: `0 0 24px ${alfa(color, 25)}`, overflow: 'hidden',
-          }}>
-            {profile?.fotoUrl
-              ? <img src={profile.fotoUrl} alt={profile.nama} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : initials(profile?.nama)
-            }
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>{profile?.nama}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>{profile?.email}</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {/* Role global (bukan scoped ke satu studio) tampil satu-satu -- biasanya cuma
-                  segelintir, penting buat identitas cepat (Super Admin, Kepala Circle, dst).
-                  Role scoped-studio (mis. Pendamping di banyak studio) DIGABUNG jadi satu badge
-                  ringkas -- rinciannya sudah lengkap per-baris di § Studio & Posisi Saya di bawah,
-                  gak perlu diulang di sini. Sebelumnya semua role di-flat jadi badge terpisah,
-                  orang dengan banyak posisi (mis. Pendamping di 5+ studio) bio-nya jadi tembok
-                  badge yang berantakan. */}
-              {profile?.roles.filter(r => !r.studio).map(r => {
-                const label = `${getRoleLabel(r.roleType)}${(r.circle ?? r.rumahUsaha) ? ` · ${(r.circle ?? r.rumahUsaha).nama}` : ''}`
-                return (
-                  // maxWidth+ellipsis -- badge role+circle (mis. "Kepala Circle · Circle Ekosistem")
-                  // bisa lebih panjang dari sisa ruang di baris ini (kolom kanan Bergabung/Tanggal
-                  // Lahir/Telegram fixed width di sebelahnya) -- tanpa ini teksnya nembus/tumpang
-                  // tindih ke kolom kanan alih-alih terpotong rapi.
-                  <span key={r.id} className="badge info" title={label}
-                    style={{ fontSize: 10, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {label}
-                  </span>
-                )
-              })}
-              {(() => {
-                const studioRoles = profile?.roles.filter(r => r.studio) ?? []
-                if (studioRoles.length === 0) return null
-                if (studioRoles.length === 1) {
-                  const r = studioRoles[0]
-                  const label = `${getRoleLabel(r.roleType)} · ${r.studio.nama}`
-                  return (
-                    <span className="badge info" title={label}
-                      style={{ fontSize: 10, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {label}
-                    </span>
-                  )
-                }
-                return (
-                  <span className="badge" style={{ fontSize: 10, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }} title={studioRoles.map(r => `${getRoleLabel(r.roleType)} · ${r.studio.nama}`).join(', ')}>
-                    + {studioRoles.length} posisi studio
-                  </span>
-                )
-              })()}
-            </div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Bergabung</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{formatTanggal(profile?.tanggalMasuk)}</div>
-            {profile?.tanggalLahir && (
-              <>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, marginBottom: 2 }}>Tanggal Lahir</div>
-                {/* lineHeight eksplisit -- glyph emoji "🎂" sering punya metrik font lebih tinggi
-                    dari teks biasa, kalau gak di-set bisa nabrak baris "Telegram" di bawahnya. */}
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.4, whiteSpace: 'nowrap' }}>
-                  🎂 {formatTanggal(profile.tanggalLahir)}
-                </div>
-              </>
-            )}
-            {profile?.telegramUsername && (
-              <>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, marginBottom: 2 }}>Telegram</div>
-                <div style={{ fontSize: 13, color: 'var(--cyan)' }}>@{profile.telegramUsername}</div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="kd pf-satu">
+      <div className="kepala"><h1>Profil saya</h1><span className="chip">{profile?.email}</span>
+        <button type="button" className="tombol k ml" style={{ color: 'var(--red)' }} onClick={logout}>Keluar</button></div>
+      <p className="sub">Semua data dirimu di satu halaman. Isi sekali, lalu klik <b>Simpan semua</b> di bawah. Data ini dipakai di HR &amp; Database, kartu Tim web kerja, dan Kalender (ulang tahun).</p>
 
-      {/* Studio & Posisi Saya */}
-      {(profile?.roles?.length > 0 || profile?.studioPemilik?.length > 0) && (
-        <div className="card" style={{ marginBottom: 20, padding: 24 }}>
-          <div className="card-header" style={{ marginBottom: 14 }}>
-            <span className="card-title">🏢 Studio & Posisi Saya</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {profile.roles.map(r => {
-              const orgUnit = r.circle ?? r.rumahUsaha
-              const label   = r.studio?.nama ?? orgUnit?.nama ?? '—'
-              const sub     = r.studio ? orgUnit?.nama : null
-              // THP melekat langsung ke posisi (UserRole.takeHomePay), SHU dihitung on-the-fly
-              // dari StudioPemilik (studio.totalShu * persenSaham/100) -- sama pola persis kayak
-              // computeTotalKompensasi di server/src/utils/compensation.js, cuma di sini per-studio.
-              const pemilik = r.studio ? profile.studioPemilik?.find(p => p.studio?.id === r.studio.id) : null
-              const shu = pemilik?.studio?.statusShu ? (pemilik.studio.totalShu * pemilik.persenSaham) / 100 : null
-              const goStudio = r.studio ? () => onNavigate?.('MasterData', { autoStudio: r.studio.id }) : null
-              return (
-                <div key={r.id} onClick={goStudio}
-                  role={goStudio ? 'button' : undefined} tabIndex={goStudio ? 0 : undefined}
-                  onKeyDown={goStudio ? onActivate(goStudio) : undefined}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 10,
-                    cursor: goStudio ? 'pointer' : 'default', transition: 'background 0.15s' }}
-                  onMouseEnter={e => { if (goStudio) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
-                  onMouseLeave={e => { if (goStudio) e.currentTarget.style.background = 'var(--bg-surface)' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                    background: orgUnit?.colorHex ?? 'var(--text-muted)' }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</div>
-                    {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{sub}</div>}
-                    {(r.takeHomePay > 0 || shu > 0) && (
-                      <div style={{ fontSize: 11, marginTop: 2, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        {r.takeHomePay > 0 && (
-                          <span style={{ color: 'var(--green)', fontWeight: 600 }}>THP {formatRp(r.takeHomePay)}</span>
-                        )}
-                        {shu > 0 && (
-                          <span style={{ color: 'var(--accent-light)', fontWeight: 600 }}>
-                            SHU {formatRp(shu)} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({pemilik.persenSaham}%)</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <span className="badge info" style={{ fontSize: 10, flexShrink: 0 }}>{getRoleLabel(r.roleType)}</span>
-                </div>
-              )
-            })}
-            {/* Studio yang dimiliki (StudioPemilik) tapi gak punya posisi kerja di situ -- tetap
-                ditampilin biar SHU-nya kelihatan, gak nyelip cuma karena gak ada UserRole. */}
-            {(profile.studioPemilik ?? [])
-              .filter(p => p.studio && !profile.roles.some(r => r.studio?.id === p.studio.id))
-              .map(p => {
-                const shu = p.studio.statusShu ? (p.studio.totalShu * p.persenSaham) / 100 : null
-                const goStudio = () => onNavigate?.('MasterData', { autoStudio: p.studio.id })
-                return (
-                  <div key={`pemilik-${p.id}`} onClick={goStudio}
-                    role="button" tabIndex={0} onKeyDown={onActivate(goStudio)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 10,
-                      cursor: 'pointer', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-surface)'}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: 'var(--text-muted)' }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.studio.nama}</div>
-                      <div style={{ fontSize: 11, marginTop: 2 }}>
-                        <span style={{ color: 'var(--accent-light)', fontWeight: 600 }}>
-                          SHU {shu != null ? formatRp(shu) : '—'} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({p.persenSaham}%)</span>
-                        </span>
-                      </div>
-                    </div>
-                    <span className="badge" style={{ fontSize: 10, flexShrink: 0 }}>Pemilik Saham</span>
-                  </div>
-                )
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-        {['profil','password'].map(t => (
-          <button key={t} className={`btn ${tab === t ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ fontSize: 13, padding: '9px 20px', textTransform: 'capitalize' }}
-            onClick={() => setTab(t)}>
-            {t === 'profil' ? '👤 Edit Profil' : '🔒 Ganti Password'}
-          </button>
-        ))}
-        <button className="btn btn-ghost" style={{ marginLeft: 'auto', color: 'var(--red)', borderColor: 'color-mix(in srgb, var(--red) 30%, transparent)', fontSize: 13 }}
-          onClick={logout}>
-          Keluar
-        </button>
-      </div>
-
-      {/* Tab: Profil */}
-      {tab === 'profil' && (
-        <div className="card" style={{ padding: 28 }}>
-          <div className="card-header" style={{ marginBottom: 20 }}>
-            <span className="card-title">Informasi Profil</span>
-          </div>
-          <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
+      <form onSubmit={handleSaveProfile} className="kartu" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <h2 style={{ margin: 0, fontSize: 19 }}>Data diri</h2>
             {/* Foto Profil */}
             <div className="form-group">
               <label className="form-label">Foto Profil</label>
@@ -507,11 +334,11 @@ export default function Profile({ onNavigate }) {
 
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Data Tambahan
+                Data kerja, alamat &amp; rekening
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+                <div className="pf-grid">
                   <div className="form-group">
                     <label className="form-label">Jenis Kelamin</label>
                     <select className="form-input" style={{ paddingLeft: 10 }}
@@ -536,7 +363,7 @@ export default function Profile({ onNavigate }) {
                     value={alamat} onChange={e => setAlamat(e.target.value)} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="pf-grid">
                   <div className="form-group">
                     <label className="form-label">Nama Bank</label>
                     <input className="form-input" style={{ paddingLeft: 14 }}
@@ -558,7 +385,7 @@ export default function Profile({ onNavigate }) {
                 </div>
 
                 {/* NIK & BPJS */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="pf-grid">
                   <div className="form-group">
                     <label className="form-label">NIK (KTP)</label>
                     <input className="form-input" style={{ paddingLeft: 14 }}
@@ -575,47 +402,120 @@ export default function Profile({ onNavigate }) {
                   </div>
                 </div>
 
-                {/* Total Kompensasi — read-only, gabungan THP dari semua studio + SHU yang pernah
-                    diterima. THP sekarang melekat per posisi/studio, diedit dari Bio Studio oleh
-                    admin studio/circle-nya, bukan self-report lagi. */}
-                {profile?.totalKompensasi != null && (
-                  <div className="form-group">
-                    <label className="form-label">Total Pendapatan 🔒</label>
-                    <div className="form-input" style={{ paddingLeft: 14, color: 'var(--green)', fontWeight: 700, background: 'var(--bg-subtle)', cursor: 'default' }}>
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(profile.totalKompensasi)}
-                    </div>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      THP: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(profile.totalThp)}
-                      {' · '}
-                      SHU: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(profile.totalShu)}
-                      {' — diatur oleh admin studio'}
-                    </span>
-                  </div>
-                )}
 
               </div>
             </div>
 
-            {profileMsg && (
-              <div className="login-error" style={{
-                background: profileMsg.type === 'success' ? 'var(--green-subtle)' : 'var(--red-subtle)',
-                color: profileMsg.type === 'success' ? 'var(--green)' : 'var(--red)',
-                borderColor: profileMsg.type === 'success' ? 'color-mix(in srgb, var(--green) 20%, transparent)' : 'color-mix(in srgb, var(--red) 20%, transparent)',
-              }}>{profileMsg.text}</div>
-            )}
 
-            <button type="submit" className="btn btn-primary" disabled={saving} style={{ alignSelf: 'flex-start', minWidth: 150 }}>
-              {saving ? <><span className="spinner"/>Menyimpan...</> : 'Simpan Profil'}
-            </button>
-          </form>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tentang aku (tampil di kartu Tim web kerja)</div>
+          <div className="form-group"><label className="form-label">Bio singkat</label><textarea className="form-input" rows={3} maxLength={300} value={t.bio ?? ''} onChange={ubahT('bio')} placeholder="Ceritakan dirimu dalam 1–2 kalimat" /></div>
+          <div className="pf-grid">
+            <div className="form-group"><label className="form-label">Keahlian</label><input className="form-input" maxLength={200} value={t.keahlian ?? ''} onChange={ubahT('keahlian')} placeholder="mis. ilustrasi, manajemen studio" /></div>
+            <div className="form-group"><label className="form-label">Paling aktif</label><input className="form-input" maxLength={60} value={t.jamAktif ?? ''} onChange={ubahT('jamAktif')} placeholder="mis. malam, 20.00–02.00" /></div>
+            <div className="form-group"><label className="form-label">Zodiak</label><select className="form-input" value={t.zodiak ?? ''} onChange={ubahT('zodiak')}><option value="">—</option>{(profile?.pilihanTentang?.zodiak ?? []).map(z => <option key={z}>{z}</option>)}</select></div>
+            <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={t.status ?? ''} onChange={ubahT('status')}><option value="">—</option>{(profile?.pilihanTentang?.status ?? []).map(x => <option key={x} value={x}>{{ JOMBLO: 'Jomblo', TAKEN: 'Taken', RAHASIA: 'Rahasia' }[x]}</option>)}</select></div>
+            <div className="form-group"><label className="form-label">Instagram</label><input className="form-input" maxLength={60} value={t.instagram ?? ''} onChange={ubahT('instagram')} placeholder="@username" /></div>
+          </div>
+        </div>
+
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 18 }}>
+          <div className="form-label">THP (Take Home Pay) 🔒</div>
+          <b style={{ fontFamily: 'var(--font-judul)', fontSize: 22 }}>{formatRp(totalThp)}</b>
+          <small className="arti">Otomatis dari Financial Forecasting: jumlah pos atas namamu (gaji, komisi, bonus, tunjangan) di bulan terbaru. Tidak perlu diisi di sini. Rinciannya per studio ada di bawah.</small>
+        </div>
+
+        {profileMsg && (
+          <div className="login-error" style={{ background: profileMsg.type === 'success' ? 'var(--green-subtle)' : 'var(--red-subtle)', color: profileMsg.type === 'success' ? 'var(--green)' : 'var(--red)', borderColor: 'transparent' }}>{profileMsg.text}</div>
+        )}
+        <button type="submit" className="tombol p" disabled={saving} style={{ alignSelf: 'flex-start' }}>{saving ? 'Menyimpan…' : 'Simpan semua'}</button>
+      </form>
+
+      {/* Studio & Posisi Saya */}
+      {(profile?.roles?.length > 0 || profile?.studioPemilik?.length > 0) && (
+        <div className="kartu" style={{ padding: 22 }}>
+          <div className="card-header" style={{ marginBottom: 14 }}>
+            <h2 style={{ margin: 0, fontSize: 19 }}>Studio, posisi &amp; THP</h2><small className="arti">THP diambil otomatis dari Financial Forecasting bulan terbaru (pos atas namamu: gaji, komisi, bonus, tunjangan)</small>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {profile.roles.map(r => {
+              const orgUnit = r.circle ?? r.rumahUsaha
+              const label   = r.studio?.nama ?? orgUnit?.nama ?? '—'
+              const sub     = r.studio ? orgUnit?.nama : null
+              // THP melekat langsung ke posisi (UserRole.takeHomePay), SHU dihitung on-the-fly
+              // dari StudioPemilik (studio.totalShu * persenSaham/100) -- sama pola persis kayak
+              // computeTotalKompensasi di server/src/utils/compensation.js, cuma di sini per-studio.
+              const pemilik = r.studio ? profile.studioPemilik?.find(p => p.studio?.id === r.studio.id) : null
+              const shu = pemilik?.studio?.statusShu ? (pemilik.studio.totalShu * pemilik.persenSaham) / 100 : null
+              const goStudio = r.studio ? () => onNavigate?.('MasterData', { autoStudio: r.studio.id }) : null
+              return (
+                <div key={r.id} onClick={goStudio}
+                  role={goStudio ? 'button' : undefined} tabIndex={goStudio ? 0 : undefined}
+                  onKeyDown={goStudio ? onActivate(goStudio) : undefined}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 10,
+                    cursor: goStudio ? 'pointer' : 'default', transition: 'background 0.15s' }}
+                  onMouseEnter={e => { if (goStudio) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                  onMouseLeave={e => { if (goStudio) e.currentTarget.style.background = 'var(--bg-surface)' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                    background: orgUnit?.colorHex ?? 'var(--text-muted)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+                    {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{sub}</div>}
+                    {(r.takeHomePay > 0 || shu > 0) && (
+                      <div style={{ fontSize: 11, marginTop: 2, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        {r.takeHomePay > 0 && (
+                          <span style={{ color: 'var(--green)', fontWeight: 600 }}>THP {formatRp(r.takeHomePay)}{r.thpDariFf ? ' · dari FF' : ''}</span>
+                        )}
+                        {shu > 0 && (
+                          <span style={{ color: 'var(--accent-light)', fontWeight: 600 }}>
+                            SHU {formatRp(shu)} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({pemilik.persenSaham}%)</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <span className="badge info" style={{ fontSize: 10, flexShrink: 0 }}>{getRoleLabel(r.roleType)}</span>
+                </div>
+              )
+            })}
+            {/* Studio yang dimiliki (StudioPemilik) tapi gak punya posisi kerja di situ -- tetap
+                ditampilin biar SHU-nya kelihatan, gak nyelip cuma karena gak ada UserRole. */}
+            {(profile.studioPemilik ?? [])
+              .filter(p => p.studio && !profile.roles.some(r => r.studio?.id === p.studio.id))
+              .map(p => {
+                const shu = p.studio.statusShu ? (p.studio.totalShu * p.persenSaham) / 100 : null
+                const goStudio = () => onNavigate?.('MasterData', { autoStudio: p.studio.id })
+                return (
+                  <div key={`pemilik-${p.id}`} onClick={goStudio}
+                    role="button" tabIndex={0} onKeyDown={onActivate(goStudio)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', background: 'var(--bg-surface)', borderRadius: 10,
+                      cursor: 'pointer', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-surface)'}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: 'var(--text-muted)' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.studio.nama}</div>
+                      <div style={{ fontSize: 11, marginTop: 2 }}>
+                        <span style={{ color: 'var(--accent-light)', fontWeight: 600 }}>
+                          SHU {shu != null ? formatRp(shu) : '—'} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({p.persenSaham}%)</span>
+                        </span>
+                      </div>
+                    </div>
+                    <span className="badge" style={{ fontSize: 10, flexShrink: 0 }}>Pemilik Saham</span>
+                  </div>
+                )
+              })}
+          </div>
         </div>
       )}
 
       {/* Tab: Password */}
-      {tab === 'password' && (
-        <div className="card" style={{ padding: 28 }}>
+      {(
+        <div className="kartu" style={{ padding: 22 }}>
           <div className="card-header" style={{ marginBottom: 20 }}>
-            <span className="card-title">Ganti Password</span>
+            <h2 style={{ margin: 0, fontSize: 19 }}>Ganti password</h2>
           </div>
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {[

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApi } from '../../hooks/useApi'
 import { formatRp, getBulanLabel } from '../../utils/format'
 import { ECOSYSTEM_NAME_FULL } from '../../config/ecosystem'
-import { stikerNama } from '../../components/layout/Topbar'
+import { fotoAtauStiker } from '../../components/layout/Topbar'
 
 // Leaderboard sesuai desain yang disepakati (Karsa, 28 Nov 2026; desain/ringkasan/leaderboard.html).
 // Data: GET /api/performance/leaderboard. Omset resmi dari Laporan Omset; akun jualan dari order web kerja harian.
@@ -110,7 +110,7 @@ export default function Leaderboard({ bulan, tahun, onPilih, onNavigate }) {
               <tr key={s.studioId}>
                 <td className="kd-peringkat" data-label="Rank">#{String(i + 1).padStart(2, '0')}</td>
                 <td data-label="Studio"><div className="studio"><span className="lambang" style={{ background: warna(s.studioId) }}>{s.nama?.[0]?.toUpperCase()}</span>
-                  <div>{s.nama}<div className="orang" style={{ gap: 6, fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>{s.koordinator && <img src={stikerNama(s.koordinator.split(',')[0])} alt="" style={{ width: 22, height: 22 }} />}{s.koordinator ?? 'Belum ada koordinator'} · {s.jumlahAkun ?? 0} akun</div></div></div></td>
+                  <div>{s.nama}<div className="orang" style={{ gap: 6, fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>{s.koordinator && <img src={fotoAtauStiker(s.koordinator.split(',')[0], s.koordinatorFoto)} alt="" style={{ width: 22, height: 22 }} />}{s.koordinator ?? 'Belum ada koordinator'} · {s.jumlahAkun ?? 0} akun</div></div></div></td>
                 <td data-label="Markets">{s.platform?.length ? s.platform.join(', ') : <span className="kosong">—</span>}</td>
                 <td className="r num" data-label="ATH / ATL">ATH {usd(s.ath ?? 0)}<span className="usd">ATL {usd(s.atl ?? 0)}</span></td>
                 <td className="r num" data-label="Total Omset">{usd(s.usd)}<span className="usd">{formatRp(s.idr)}</span></td>

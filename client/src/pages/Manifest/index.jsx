@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { ECOSYSTEM_NAME } from '../../config/ecosystem'
-import { stikerNama } from '../../components/layout/Topbar'
+import { fotoAtauStiker } from '../../components/layout/Topbar'
 
 // MANIFEST (web pusat, Karsa Circle, 27 Nov 2026): kumpulan manifestasi semua anggota per studio. Anggota menulis sendiri di
 // web kerja harian (menu Manifest) selama bulan berjalan; mulai tanggal 1 bulan berikutnya terkunci. Di sini: rekap, salin format WA, unduh .txt.
@@ -69,7 +69,7 @@ export default function Manifest() {
               <div className="mf-isi">
                 {st.anggota.map(a => (
                   <div key={a.id} className={a.isi ? 'ada' : ''}>
-                    <div className="orang" style={{ justifyContent: 'space-between' }}><span className="orang"><img src={stikerNama(a.nama)} alt="" /><b>{a.nama}</b></span>{!a.isi && <span className="pill waspada" style={{ fontSize: 12 }}>Belum menulis</span>}</div>
+                    <div className="orang" style={{ justifyContent: 'space-between' }}><span className="orang"><img src={fotoAtauStiker(a.nama, a.foto)} alt="" /><b>{a.nama}</b></span>{!a.isi && <span className="pill waspada" style={{ fontSize: 12 }}>Belum menulis</span>}</div>
                     {a.isi ? <><p>{a.isi}</p>{a.diubah && <small className="kosong">{new Date(a.diubah).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' })}</small>}</> : <p className="kosong">—</p>}
                   </div>
                 ))}
