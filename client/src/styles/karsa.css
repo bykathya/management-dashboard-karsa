@@ -138,3 +138,40 @@
 .kd .ss img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .kd .ss button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); font-size: 13px; line-height: 1; padding: 0; cursor: pointer; }
 .kd kbd { border: 1.5px solid var(--border-hover); border-radius: 6px; padding: 0 6px; font-size: 13px; background: var(--bg-card); font-family: inherit; }
+
+/* Financial Forecasting */
+.kd .tersimpan { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.kd .tersimpan i { width: 8px; height: 8px; border-radius: 50%; background: #2e7d32; display: inline-block; }
+.kd .pita .pita-panah { background: transparent; border: 0; color: #f3f1ea; font-size: 18px; padding: 0 4px; cursor: pointer; line-height: 1; }
+.kd .ff-top { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 24px; padding: 16px 20px; margin-bottom: 16px; }
+.kd .ff-top b.besar { display: block; font-family: var(--font-judul); font-weight: 600; font-size: 22px; }
+.kd .kat { background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 24px; margin-bottom: 14px; overflow: hidden; }
+.kd .kat-h { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 14px 18px; border-bottom: 1.5px solid var(--border); }
+.kd .kat-h h2 { margin: 0; font-size: 17px; flex: 1 1 200px; }
+.kd .kat-h .ff-nama-kat { font-size: 17px; }
+.kd .sub-h { display: flex; width: 100%; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 18px; background: var(--bg-primary); border: 0; border-bottom: 1.5px solid var(--border); font-weight: 700; color: var(--text); font-size: 14.5px; cursor: pointer; }
+.kd .sub-h:hover { background: color-mix(in srgb, var(--accent) 28%, var(--bg-card)); }
+.kd .item { display: grid; grid-template-columns: 34px minmax(0, 1fr) 170px 96px 72px 34px; gap: 8px; align-items: center; padding: 6px 18px; border-bottom: 1px solid var(--border); }
+.kd .item .nm { color: var(--text-muted); font-size: 12.5px; }
+.kd .item input, .kd .kat-baru { min-height: 38px; border: 1.5px solid var(--border-hover); border-radius: 10px; padding: 0 10px; font: inherit; background: var(--bg-input, var(--bg-card)); color: var(--text); width: 100%; box-sizing: border-box; }
+.kd .kat-baru { flex: 1; min-height: 40px; border-color: var(--line); border-radius: 12px; }
+.kd .item input.rp { text-align: right; }
+.kd .bayar { min-height: 34px; border-radius: 999px; border: 1.5px solid var(--line); font-size: 12.5px; font-weight: 700; background: var(--pink-candy); color: #111; cursor: pointer; }
+.kd .bayar.ya { background: var(--accent); }
+.kd .ikon-b { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border-hover); background: var(--bg-card); color: var(--text); padding: 0; cursor: pointer; flex: none; }
+.kd .kecil { min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.kd .kecil.p { background: var(--accent); color: #111; }
+.kd .urut { display: flex; gap: 4px; }
+.kd .urut button { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border-hover); background: var(--bg-card); color: var(--text); padding: 0; font-weight: 700; cursor: pointer; }
+.kd .urut button:disabled { opacity: .3; cursor: default; }
+.kd .kaki { position: sticky; bottom: 10px; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; background: #111; color: #f3f1ea; border-radius: 22px; padding: 12px 18px; margin-top: 16px; border: 1.5px solid var(--line); }
+.kd .kaki small { display: block; color: #b9b7ad; font-size: 12px; }
+.kd .kaki b { font-family: var(--font-judul); font-weight: 600; }
+.kd .kaki .minus { color: var(--pink-candy); } .kd .kaki .plus { color: var(--accent); }
+@media (max-width: 700px) {
+  .kd .item { grid-template-columns: 26px minmax(0, 1fr) 84px 70px; row-gap: 6px; padding: 8px 12px; }
+  .kd .item > input { grid-column: 2 / 4; grid-row: 1; } .kd .item .ikon-b { grid-column: 4; grid-row: 1; justify-self: end; }
+  .kd .item .rpw { grid-column: 2; grid-row: 2; } .kd .item .bayar { grid-column: 3; grid-row: 2; } .kd .item .urut { grid-column: 4; grid-row: 2; justify-self: end; }
+  .kd .kat-h, .kd .sub-h { padding-left: 12px; padding-right: 12px; }
+  .kd .kaki { position: static; }
+}
