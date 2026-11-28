@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApi } from '../../hooks/useApi'
+import { WEB_KERJA } from '../../config/ecosystem'
 import { formatRp, formatUSD, getBulanLabel } from '../../utils/format'
 
 // HALAMAN "WEB CIRCLE" (14 Nov 2026, permintaan Founder): ringkasan semua circle & unit web circle tanpa membuka alamatnya satu per satu.
@@ -168,7 +169,7 @@ export default function WebCircle() {
             <div key={`${k.jenis}-${k.id}`} className="card" style={{ marginBottom: 20 }}>
               <div className="card-header">
                 <span className="card-title">{k.nama} <span style={{ fontSize: 12, fontWeight: 500, color: REDUP }}>{JENIS[k.jenis]}, {k.unit.length} unit</span></span>
-                {k.alamat && <a className="card-action" href={k.alamat} target="_blank" rel="noreferrer noopener">Buka web circle ↗</a>}
+                {k.alamat && <a className="card-action" href={WEB_KERJA} target="_blank" rel="noreferrer noopener">Buka web kerja ↗</a>}
               </div>
               <TabelKelompok k={k} />
             </div>

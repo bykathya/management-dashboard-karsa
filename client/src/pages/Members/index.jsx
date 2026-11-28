@@ -1003,7 +1003,7 @@ function OnboardModal({ onClose, onSuccess }) {
           </div>
           <div>
             <label style={labelStyle}>Email *</label>
-            <input style={inputStyle} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="nama@domain-anda.com" required />
+            <input style={inputStyle} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="nama@gmail.com" required />
           </div>
           <div>
             <label style={labelStyle}>Password Awal *</label>
