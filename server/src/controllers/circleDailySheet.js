@@ -75,6 +75,13 @@ export const muat = async (req, res) => {
       }),
       prisma.orderProduksi.findFirst({ where: { studioId, mataUang: 'USD', kurs: { not: null } }, orderBy: { createdAt: 'desc' }, select: { kurs: true } }),
     ])
+    // Target bulanan (desain Karsa 28 Nov 2026): target unit + target per akun, sama dengan Progres Omset.
+    const [th, bl] = req.query.bulan.split('-').map(Number)
+    const [tUnit, tAkun, bolehTarget] = await Promise.all([
+      prisma.targetOmsetUnit.findUnique({ where: { studioId_tahun_bulan: { studioId, tahun: th, bulan: bl } }, select: { targetUsd: true } }),
+      prisma.targetOmsetAkun.findMany({ where: { akunId: { in: akunList.map(a => a.id) }, tahun: th, bulan: bl }, select: { akunId: true, targetUsd: true } }),
+      kelolaStudio(peranKerja(req), studioId),
+    ])
     const namaAkun = (o) => (!o.akun ? '—' : o.akun.namaAkun === AKUN_OTOMATIS ? 'Order internal' : o.akun.namaAkun)
     const baris = orders.map(o => {
       const tim = o.assignments.filter(a => a.userId)
@@ -98,6 +105,7 @@ export const muat = async (req, res) => {
         progres: PROGRES, jalur: JALUR, statusInbox: STATUS_INBOX, kursBawaan: terakhir?.kurs ?? KURS_BAWAAN,
       },
       bolehUbah: !p.lihatSaja,
+      target: { tahun: th, bulan: bl, unitUsd: tUnit?.targetUsd ?? null, akun: Object.fromEntries(tAkun.map(t => [t.akunId, t.targetUsd])), bolehUbah: !!bolehTarget },
     } })
   } catch {
     return gagal(res, 500, 'Gagal memuat Daily Sheet')
