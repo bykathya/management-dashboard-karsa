@@ -2474,7 +2474,9 @@ model ProfilSdm {
   posisiBerikut String?
   catatan       String?
   diubahOlehId  String?
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @updatedAt  // HR & Database (Karsa, 28 Nov 2026): masa kontrak, diisi Koordinator/Kepala Circle di web pusat
+  kontrakMulai  DateTime? @db.Date
+  kontrakAkhir  DateTime? @db.Date
 }
 
 // LOG IMPERSONASI (21 Okt 2026) — Super Admin "masuk sebagai" pengguna lain di web circle, untuk bantuan/uji. Selalu tercatat.
@@ -2910,4 +2912,19 @@ model SopPanduan {
   updatedAt DateTime @updatedAt
 
   @@index([studioId, kategori])
+}
+
+// HR & Database (Karsa, 28 Nov 2026): 4 dokumen anggota (KTP, NDA, SKCK/SKBB, buku rekening). File di folder PRIVAT server
+// (server/private/dokumen-anggota), hanya dibuka lewat API yang memeriksa login & wewenang. Anggota melihat statusnya saja.
+model DokumenAnggota {
+  id        String   @id @default(cuid())
+  userId    String
+  jenis     String // KTP | NDA | SKCK | BANK
+  berkas    String
+  mime      String
+  ukuran    Int
+  olehId    String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jenis])
 }

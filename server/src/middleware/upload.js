@@ -73,3 +73,16 @@ export const uploadBuktiKas = multer({
   fileFilter: gambarFilter,
   limits: { fileSize: 5 * 1024 * 1024, files: 10 },
 })
+
+// Dokumen anggota HR (KTP, NDA, SKCK, buku rekening — 28 Nov 2026): folder PRIVAT, gambar atau PDF, maks 8 MB.
+export const dokumenAnggotaDir = path.join(__dirname, '../../private/dokumen-anggota')
+mkdirSync(dokumenAnggotaDir, { recursive: true })
+const EKST_DOK = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/webp': '.webp', 'application/pdf': '.pdf' }
+export const uploadDokumenAnggota = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, dokumenAnggotaDir),
+    filename: (_req, file, cb) => cb(null, `${randomBytes(24).toString('hex')}${EKST_DOK[file.mimetype.toLowerCase()] ?? ''}`),
+  }),
+  fileFilter: (_req, file, cb) => (EKST_DOK[file.mimetype.toLowerCase()] ? cb(null, true) : cb(tolak('Dokumen harus gambar (PNG/JPG/WebP) atau PDF.'))),
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+})

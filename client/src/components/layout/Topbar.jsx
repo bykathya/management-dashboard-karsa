@@ -6,6 +6,7 @@ const PAGE_TITLES = {
   Forecasting:  'Financial Forecasting',
   DetailKas:    'Detail Kas + Ekuitas',
   Manifest:     'Manifest',
+  HrDatabase:   'HR & Database',
   Sop:          'SOP & Aturan Studio',
   LaporanMingguan: 'Weekly Report',
   LaporanBulanan:  'Monthly Report',

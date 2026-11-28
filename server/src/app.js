@@ -55,6 +55,7 @@ import monthlyDataRoutes  from './routes/monthlyData.js'
 import detailKasRoutes    from './routes/detailKas.js'
 import ffRoutes           from './routes/ffEstimasi.js'
 import { manifestRouter, sopRouter } from './routes/manifestSop.js'
+import hrRoutes           from './routes/hrDatabase.js'
 import laporanStudioRoutes from './routes/laporanStudio.js'
 import orgFundReportRoutes from './routes/orgFundReport.js'
 import danaPengembanganRoutes from './routes/danaPengembangan.js'
@@ -172,7 +173,8 @@ app.use('/api/monthly-data',  monthlyDataRoutes)
 app.use('/api/laporan-studio', laporanStudioRoutes) // Weekly & Monthly Report dari Daily Sheet (Karsa, 27 Nov 2026)
 app.use('/api/ff',            ffRoutes)
 app.use('/api/manifest',      manifestRouter) // Manifest & SOP (Karsa, 27 Nov 2026)
-app.use('/api/sop',           sopRouter) // Financial Forecasting baru (Karsa, 27 Nov 2026)
+app.use('/api/sop',           sopRouter)
+app.use('/api/hr',            hrRoutes) // HR & Database (Karsa, 28 Nov 2026) — dokumen di folder privat // Financial Forecasting baru (Karsa, 27 Nov 2026)
 app.use('/api/kas-detail',    detailKasRoutes) // Detail Kas + Ekuitas (Karsa, 27 Nov 2026) — bukti di folder privat
 app.use('/api/dana-pengembangan', danaPengembanganRoutes)
 app.use('/api/org-fund-reports', orgFundReportRoutes)

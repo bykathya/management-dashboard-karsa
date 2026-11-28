@@ -62,6 +62,7 @@ export const NAV = [
     items: [
       { id: 'Finance',      label: 'Keuangan' },
       { id: 'SDM',          label: 'SDM' },
+      { id: 'HrDatabase',   label: 'HR & Database', roles: ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'PENDAMPING', 'KOORDINATOR'] },
     ],
   },
   {
@@ -92,6 +93,7 @@ export const ICONS = {
   get Forecasting() { return this.Finance },
   get DetailKas() { return this.Finance },
   get Manifest() { return this.Goals },
+  get HrDatabase() { return this.Members },
   get Sop() { return this.Modul },
   get LaporanMingguan() { return this.Reports },
   get LaporanBulanan() { return this.Reports },
