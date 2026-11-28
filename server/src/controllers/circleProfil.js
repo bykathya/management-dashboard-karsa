@@ -34,9 +34,13 @@ function rapikanProfil(body) {
 
 // GET /api/circle/profil-saya
 export const getProfilSaya = wrap(async (req, res) => {
-  const [u, p] = await Promise.all([
-    prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, email: true, nomorWa: true, posisi: true, tanggalLahir: true, namaBank: true, noRekening: true, atasNamaRekening: true } }),
+  const [u, p, sdm, dok, peran] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, email: true, nomorWa: true, posisi: true, tanggalLahir: true, tanggalMasuk: true, namaBank: true, noRekening: true, atasNamaRekening: true } }),
     prisma.profilAnggota.findUnique({ where: { userId: req.user.id } }),
+    // HR & Database (28 Nov 2026): data kerja & status dokumen — anggota melihat saja (dokumennya sendiri tidak dikirim)
+    prisma.profilSdm.findUnique({ where: { userId: req.user.id }, select: { kontrakMulai: true, kontrakAkhir: true } }),
+    prisma.dokumenAnggota.findMany({ where: { userId: req.user.id }, select: { jenis: true } }),
+    prisma.userRole.findMany({ where: { userId: req.user.id, roleType: { not: 'DIGNITY' } }, select: { roleType: true, studio: { select: { nama: true } } } }),
   ])
   if (!u) return gagal(res, 404, 'Pengguna tidak ditemukan')
   return res.json({ success: true, data: {
@@ -44,6 +48,8 @@ export const getProfilSaya = wrap(async (req, res) => {
     ndaUrl: p?.ndaUrl ?? null,
     resmi: { nama: u.nama, email: u.email, nomorWa: u.nomorWa, posisi: u.posisi, tanggalLahir: u.tanggalLahir, bank: u.namaBank, rekening4: empatAkhir(u.noRekening), atasNama: u.atasNamaRekening },
     pilihan: { zodiak: ZODIAK, status: STATUS },
+    kerja: { studio: [...new Set(peran.map(r => r.studio?.nama).filter(Boolean))], peran: [...new Set(peran.map(r => PERAN[r.roleType]).filter(Boolean))], tanggalMasuk: u.tanggalMasuk, kontrakMulai: sdm?.kontrakMulai ?? null, kontrakAkhir: sdm?.kontrakAkhir ?? null },
+    dokumen: Object.fromEntries(['KTP', 'NDA', 'SKCK', 'BANK'].map(j => [j, dok.some(d => d.jenis === j)])),
   } })
 })
 
@@ -51,6 +57,12 @@ export const getProfilSaya = wrap(async (req, res) => {
 export const simpanProfilSaya = wrap(async (req, res) => {
   const { galat, data } = rapikanProfil(req.body ?? {})
   if (galat) return gagal(res, 422, galat)
+  // Nomor WhatsApp diisi sendiri (28 Nov 2026) → langsung masuk data HR (User.nomorWa)
+  if (req.body?.nomorWa !== undefined) {
+    const wa = String(req.body.nomorWa ?? '').trim().slice(0, 30) || null
+    if (wa && !/^[+0-9 ()-]{6,30}$/.test(wa)) return gagal(res, 422, 'Nomor WhatsApp hanya angka, spasi, +, atau -')
+    await prisma.user.update({ where: { id: req.user.id }, data: { nomorWa: wa } })
+  }
   await prisma.profilAnggota.upsert({ where: { userId: req.user.id }, update: data, create: { userId: req.user.id, ...data } })
   return res.json({ success: true, message: 'Profil disimpan' })
 })

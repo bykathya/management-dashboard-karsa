@@ -1635,3 +1635,16 @@ h1, h2, .page-header h1, .login-header h1, .topbar-title, .logo-name { font-fami
   .page-content { padding: 0 !important; }
   .card { break-inside: avoid; }
 }
+
+/* HR & Database (Karsa, 28 Nov 2026) */
+.hr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.hr-kartu { display: flex; flex-direction: column; text-align: left; padding: 0; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--bg-card); color: var(--text); overflow: hidden; cursor: pointer; min-width: 0; }
+.hr-kartu:hover { border-color: var(--line); }
+.hr-foto { position: relative; height: 120px; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); }
+.hr-foto img { width: 100%; height: 100%; object-fit: cover; }
+.hr-tag { position: absolute; top: 8px; left: 8px; padding: 2px 9px; border-radius: var(--pill); border: 1.5px solid var(--line); font-size: 11px; font-weight: 700; z-index: 1; }
+.hr-tag.kanan { left: auto; right: 8px; }
+.hr-inisial { width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--pink-candy); color: var(--on-pink); font-weight: 800; font-size: 20px; border: 1.5px solid var(--line); flex-shrink: 0; }
+.hr-dok { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: var(--pill); border: 1px dashed var(--border-hover); color: var(--text-muted); }
+.hr-dok.ada { border-style: solid; border-color: var(--line); background: var(--accent); color: var(--on-accent); }
+.hr-lambang { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--on-accent); font-weight: 800; border: 1.5px solid var(--line); font-size: 12px; }

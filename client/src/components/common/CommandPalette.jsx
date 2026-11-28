@@ -25,6 +25,7 @@ const KEYWORDS = {
   Dashboard:    'overview dashboard ringkasan finansial total kas dana pe cpm ekuitas runway',
   LaporanMingguan: 'weekly report laporan mingguan studio daily sheet wip revisi admin pic aktivitas',
   LaporanBulanan:  'monthly report laporan bulanan studio cpm pertumbuhan akun lempar kerjaan freelancer',
+  HrDatabase:   'hr database anggota ktp nda skck rekening kontrak dokumen whatsapp',
   Manifest:     'manifest manifestasi doa syukur harapan bulanan anggota wa',
   Sop:          'sop aturan panduan kerja admin akun vgen nda qc do dont',
   DetailKas:    'detail kas ekuitas saldo rekening bank screenshot bukti vgen paypal dana pengamanan valid',
