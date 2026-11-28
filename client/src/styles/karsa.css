@@ -260,3 +260,14 @@
 .kd .ev b { display: block; margin: 1px 0; } .kd .ev small { display: block; color: var(--text-muted); font-size: 12.5px; }
 .kd .baris-ev { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-bottom: 1.5px solid var(--border); background: transparent; color: var(--text); padding: 8px 2px; text-align: left; cursor: pointer; font: inherit; }
 .kd .baris-ev b { font-family: var(--font-judul); width: 28px; } .kd .baris-ev span { flex: 1; } .kd .baris-ev i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line); }
+
+/* Manifest */
+.kd .mf-studio { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.kd .mf-studio button { display: flex; align-items: center; gap: 10px; text-align: left; padding: 14px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); cursor: pointer; font: inherit; }
+.kd .mf-studio button b { display: block; } .kd .mf-studio button small { color: var(--text-muted); font-size: 13px; }
+.kd .mf-studio button.on { box-shadow: 0 0 0 3px var(--pink-candy); }
+.kd .mf-isi { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.kd .mf-isi > div { border: 1.5px dashed var(--line); border-radius: 20px; padding: 16px 18px; background: var(--bg-primary); min-height: 110px; }
+.kd .mf-isi > div.ada { border-style: solid; background: var(--bg-card); }
+.kd .mf-isi p { white-space: pre-wrap; line-height: 1.6; margin: 12px 0 8px; color: var(--text); }
+.kd .mf-isi .orang img { width: 36px; height: 36px; }
