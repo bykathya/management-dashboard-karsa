@@ -4,6 +4,8 @@
 export const ECOSYSTEM_NAME      = 'Karsa'
 export const ECOSYSTEM_NAME_FULL = 'Karsa Circle'
 export const APP_URL             = 'app.domain-anda.com'
+// Alamat web kerja harian (menu Daily Sheet ↗ di web pusat).
+export const WEB_KERJA           = 'https://kerja.karsa.network/'
 export const TELEGRAM_BOT        = 'nama_bot_anda'   // username bot Telegram (tanpa @)
 
 // Modul yang bisa disembunyikan dari menu (kode & tabel tetap ada).

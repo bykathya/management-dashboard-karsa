@@ -3,7 +3,8 @@ import { useApi } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { formatUSD, formatRp, formatRpShort, formatTanggal, getBulanLabel } from '../../utils/format'
-import { ECOSYSTEM_NAME } from '../../config/ecosystem'
+import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL } from '../../config/ecosystem'
+import { stikerNama } from '../../components/layout/Topbar'
 import { onActivate } from '../../utils/a11y'
 import { getRoleOrgUnit, hasMinRole } from '../../utils/roles'
 import { dihitungDiEkosistem } from '../../components/common/BadgeKolaborasi'
@@ -324,7 +325,6 @@ function FinancialSummary({ onNavigate }) {
           ))}
         </div>
       )}
-      {!loading && data?.perStudio?.length > 0 && <TabelRunway rows={data.perStudio} total={data} onNavigate={onNavigate} />}
     </div>
   )
 }
@@ -379,6 +379,81 @@ function TabelRunway({ rows, total, onNavigate }) {
     </div>
   )
 }
+
+
+// ── Overview sesuai desain yang disepakati (Karsa, 28 Nov 2026; desain/ringkasan/index.html) ─────────────
+// Angka dari /api/monthly-data/summary (server menyamarkan angka di luar wilayah peran → null → "—").
+const WARNA_LAMBANG = ['var(--accent)', 'var(--pink-candy)', 'var(--kd-kuning)']
+const usdDari = (rp, kurs) => (rp == null ? '—' : '$' + Math.round(rp / (kurs || 17000)).toLocaleString('en-US'))
+function PilRunwayKd({ r }) {
+  if (r == null) return <span className="kosong">—</span>
+  const kelas = r >= 6 ? 'aman' : r >= 3 ? 'waspada' : 'bahaya'
+  return <span className={`pill ${kelas}`}>{fmtBln(r)}</span>
+}
+function OverviewKarsa({ onNavigate, user, belumLapor }) {
+  const now = new Date()
+  const [pilih, setPilih] = useState(`${now.getFullYear()}-${now.getMonth() + 1}`)
+  const [tahun, bulan] = pilih.split('-').map(Number)
+  const { data, loading, error } = useApi(`/api/monthly-data/summary?bulan=${bulan}&tahun=${tahun}`)
+  const pilihan = Array.from({ length: 12 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); return { v: `${d.getFullYear()}-${d.getMonth() + 1}`, l: `${MONTHS[d.getMonth()]} ${d.getFullYear()}` } })
+  const kurs = data?.kurs ?? 17000
+  const rows = data?.perStudio ?? []
+  const namaBulan = getBulanLabel(bulan, tahun)
+  const ke = (halaman) => (e) => { e.preventDefault(); onNavigate?.(halaman) }
+  return (
+    <div className="kd">
+      <div className="kepala">
+        <h1>Overview</h1>
+        <span className="chip">{rows.length} Studio</span>
+        <div className="pita">
+          <select aria-label="Bulan" value={pilih} onChange={e => setPilih(e.target.value)}>
+            {pilihan.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+          </select>
+          <span className="lime" title={`Kurs Rp ${kurs.toLocaleString('id-ID')} per USD`}>Rp {Math.round(kurs / 1000)}k</span>
+        </div>
+      </div>
+      <p className="sub">{greeting()}, {user?.nama?.split(' ')[0]}! Ringkasan keuangan {ECOSYSTEM_NAME_FULL} bulan ini. Angka terhitung otomatis dari Daily Sheet tiap studio.{belumLapor ? <> <b>{belumLapor} studio belum lapor minggu ini</b>, jadi angkanya masih Rp 0.</> : null}</p>
+      {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      <div className="stats">
+        <div className="stat lime"><span>Kas + Ekuitas<small className="arti">uang di rekening + dana di luar kas</small></span><b>{loading ? '…' : formatRp(data?.totalEkuitasUsaha)}</b>
+          <div className="bawah"><span>≈ {usdDari(data?.totalEkuitasUsaha, kurs)}</span><button type="button" className="tautan" onClick={ke('DetailKas')}>Kas + Ekuitas →</button></div></div>
+        <div className="stat pink"><span>Total CPM<small className="arti">biaya rutin per bulan semua studio</small></span><b>{loading ? '…' : formatRp(data?.totalCpm)}</b>
+          <div className="bawah"><span>Runway <b style={{ fontFamily: 'var(--font-judul)' }}>{fmtBln(data?.runway)}</b><small className="arti">kas cukup untuk berapa bulan</small></span><button type="button" className="tautan" onClick={ke('Forecasting')}>Detail CPM →</button></div></div>
+        <div className="stat"><span>Global Revenue<small className="arti">total omset semua studio</small></span><b>{loading ? '…' : data?.totalOmsetUsd == null ? '—' : formatUSD(data.totalOmsetUsd)}</b>
+          <div className="bawah"><span>{formatRp(data?.totalOmsetIdr)}</span><button type="button" className="tautan" onClick={ke('LaporanBulanan')}>Monthly Report →</button></div></div>
+      </div>
+
+      <div className="kartu">
+        <div className="judul-tabel">
+          <div><h2>Posisi Kas + Ekuitas Usaha &amp; CPM Bulanan<small className="arti">uang tiap studio dibanding biaya bulanannya</small></h2>
+            <p>{namaBulan} · Kas + Ekuitas = kas rekening + dana di luar kas · Kurs Rp {kurs.toLocaleString('id-ID')} / USD</p></div>
+          <button type="button" className="tombol ml" onClick={ke('DetailKas')}>Detail Kas + Ekuitas →</button>
+        </div>
+        <div className="scroll"><table className="hp">
+          <thead><tr><th>No</th><th>Studio</th><th>Koordinator</th><th className="r">Kas + Ekuitas<br />(Rp &amp; $)</th><th className="r">CPM<br />(Biaya bulanan)</th><th className="r">Kas + Ekuitas / CPM<br />(Runway)</th></tr></thead>
+          <tbody>
+            {loading && <tr><td colSpan={6} className="kosong">Memuat…</td></tr>}
+            {!loading && !rows.length && <tr><td colSpan={6} className="kosong">Belum ada studio aktif.</td></tr>}
+            {rows.map((d, i) => (
+              <tr key={d.studioId}>
+                <td className="num" data-label="No">{String(i + 1).padStart(2, '0')}</td>
+                <td data-label="Studio"><div className="studio"><span className="lambang" style={{ background: WARNA_LAMBANG[i % 3] }}>{d.nama?.[0]?.toUpperCase()}</span>{d.nama}</div></td>
+                <td data-label="Koordinator">{d.koordinator ? <div className="orang"><img src={stikerNama(d.koordinator.split(',')[0])} alt="" />{d.koordinator}</div> : <span className="kosong">—</span>}</td>
+                <td className="r num" data-label="Kas + Ekuitas">{formatRp(d.kasEkuitas)}<span className="usd">{usdDari(d.kasEkuitas, kurs)}</span></td>
+                <td className="r num" data-label="CPM">{formatRp(d.cpm)}<span className="usd">{usdDari(d.cpm, kurs)}</span></td>
+                <td className="r" data-label="Runway"><PilRunwayKd r={d.runway} /></td>
+              </tr>
+            ))}
+          </tbody>
+          {rows.length > 0 && <tfoot><tr><td data-label="" /><td data-label="">Total circle</td><td data-label="" /><td className="r num" data-label="Kas + Ekuitas">{formatRp(data.totalEkuitasUsaha)}<span className="usd">{usdDari(data.totalEkuitasUsaha, kurs)}</span></td><td className="r num" data-label="CPM">{formatRp(data.totalCpm)}<span className="usd">{usdDari(data.totalCpm, kurs)}</span></td><td className="r" data-label="Runway"><PilRunwayKd r={data.runway} /></td></tr></tfoot>}
+        </table></div>
+        <div className="legenda"><b>Runway:</b> <span className="pill aman">6 bln ke atas</span> aman <span className="pill waspada">3–6 bln</span> perlu dijaga <span className="pill bahaya">di bawah 3 bln</span> waspada</div>
+      </div>
+    </div>
+  )
+}
+
 
 // ── Circle Drill-Down Modal ───────────────────────────────
 function CircleDrillModal({ circle, filterKey = 'circleId', onClose, onNavigate }) {
@@ -644,54 +719,16 @@ export default function Dashboard({ onNavigate }) {
 
   // Peran di bawah Kepala Ekosistem hanya menerima angka dana dari unit dalam wilayahnya (server menyaring).
   const terbatas = data?.lingkup?.semua === false
-  const stats = data ? [
-    { label: 'Total Anggota',   value: data.totalUsers,   trend: `${data.tier.tetap + data.tier.karyawan} inti · ${data.tier.magang} magang`,    color: 'purple', page: 'Members'     },
-    { label: 'Unit Usaha',      value: data.totalStudios, trend: `${data.totalCircles} circle`,  color: 'cyan',   page: 'MasterData' },
-    { label: 'Omset Minggu Ini',value: formatUSD(data.omset?.mingguIni ?? 0), trend: `${data.weeklyReportsThisWeek} laporan`, color: 'green', page: 'WeeklyReport' },
-    { label: 'Omset Bulan Ini', value: formatUSD(data.omset?.bulanIni ?? 0),  trend: terbatas ? `${data.lingkup.jumlahUnit} unit wilayahmu` : 'seluruh ekosistem', color: 'amber', page: 'WeeklyReport' },
-  ] : []
 
   return (
     <>
-      {/* Greeting */}
-      <div className="greeting-banner">
-        <div className="greeting-text">
-          <h2>{greeting()}, {user?.nama?.split(' ')[0]}! 👋</h2>
-          <p>{today()} — Berikut ringkasan ekosistem {ECOSYSTEM_NAME} hari ini.</p>
-        </div>
-        <div className="greeting-visual">🚀</div>
-      </div>
-
-      {/* Stat Cards */}
-      {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
+      <OverviewKarsa onNavigate={onNavigate} user={user} belumLapor={weekHitung ? weekHitung.filter(x => !x.sudahLapor).length : 0} />
       {terbatas && (
-        <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-secondary)', fontSize: 12.5, lineHeight: 1.5 }}>
-          🔒 Semua unit tetap terlihat, tapi angka uangnya (omset, kas, dana) hanya terbuka untuk <strong>{data.lingkup.jumlahUnit} unit dalam wilayah perananmu</strong>; selebihnya tampil "—". Total seluruh ekosistem hanya untuk Advisor dan Kepala Ekosistem.
+        <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--bg-card)', color: 'var(--text-secondary)', fontSize: 12.5, lineHeight: 1.5 }}>
+          🔒 Semua unit tetap terlihat, tapi angka uangnya hanya terbuka untuk <strong>{data.lingkup.jumlahUnit} unit dalam wilayah perananmu</strong>; selebihnya tampil "—".
         </div>
       )}
-
-      <div className="stat-grid">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="stat-card" style={{ opacity: 0.3, height: 120 }} />
-            ))
-          : stats.map(s => (
-              <div key={s.label} className={`stat-card ${s.color}`}
-                onClick={() => onNavigate?.(s.page)}
-                style={{ cursor: 'pointer' }}>
-                <div className={`stat-icon ${s.color}`}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                </div>
-                <div className="stat-label">{s.label}</div>
-                <div className="stat-value">{s.value}</div>
-                <div className="stat-trend trend-up" style={{ color: 'var(--text-muted)', fontSize: 11 }}>{s.trend}</div>
-              </div>
-            ))
-        }
-      </div>
+      {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       <KartuKolaborasi list={data?.kolaborasi} onNavigate={onNavigate} />
 
