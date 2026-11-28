@@ -10,7 +10,7 @@ const CHECKLIST_KOORDINATOR = [
   {
     icon: '👤',
     judul: 'Lengkapi Profil',
-    desc: 'Foto, nomor WA, Telegram, tanggal lahir, posisi/bidang',
+    desc: 'Foto, nomor WA, tanggal lahir, posisi/bidang',
     page: 'Profile',
     warna: 'var(--accent)',
   },
@@ -469,35 +469,6 @@ export default function Announcement({ onNavigate, buat }) {
               </div>
             )}
 
-            {/* Toggle Telegram */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
-              background: form.kirimTelegram ? 'color-mix(in srgb, var(--cyan) 8%, transparent)' : 'var(--bg-surface)',
-              border: `1px solid ${form.kirimTelegram ? 'color-mix(in srgb, var(--cyan) 30%, transparent)' : 'var(--border)'}`,
-              borderRadius: 10, padding: '12px 16px', transition: 'all .2s' }}>
-              <span style={{ fontSize: 20 }}>✈️</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: form.kirimTelegram ? 'var(--cyan)' : 'var(--text)' }}>
-                  Kirim ke Telegram
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Pengumuman akan dikirim langsung ke semua anggota yang sudah daftar bot
-                </div>
-              </div>
-              <div style={{
-                width: 40, height: 22, borderRadius: 99, transition: 'background .2s',
-                background: form.kirimTelegram ? 'var(--cyan)' : 'var(--bg-input)',
-                position: 'relative', flexShrink: 0,
-              }}>
-                <div style={{
-                  width: 16, height: 16, borderRadius: '50%', background: '#fff',
-                  position: 'absolute', top: 3, transition: 'left .2s',
-                  left: form.kirimTelegram ? 20 : 3,
-                }} />
-              </div>
-              <input type="checkbox" style={{ display: 'none' }}
-                checked={form.kirimTelegram}
-                onChange={e => setForm(f => ({ ...f, kirimTelegram: e.target.checked }))} />
-            </label>
 
             {msg && (
               <div className="login-error" style={{
