@@ -35,6 +35,8 @@ import * as Ds from '../controllers/circleDailySheet.js'
 import { getInfo } from '../controllers/circleInfo.js'
 import * as Ms from '../controllers/manifestSop.js'
 import { authenticate } from '../middleware/auth.js'
+import rateLimit from 'express-rate-limit'
+import { changePassword } from '../controllers/profile.js'
 import { populateRoles } from '../middleware/checkRole.js'
 
 // API web circle. Otorisasi final per studio ada di controller (canManageStudio /
@@ -463,6 +465,10 @@ router.get('/manpower', authenticate, populateRoles, Op.getManpower)
 // Profil saya, kartu Tim, mentor (Karsa Circle, tahap 6, 26 Nov 2026)
 router.get('/profil-saya',              authenticate, populateRoles, Pf.getProfilSaya)
 router.put('/profil-saya',              authenticate, populateRoles, Pf.simpanProfilSaya)
+// Ganti password dari web kerja (Karsa, 28 Nov 2026): Admin dan Talent tidak bisa masuk web pusat.
+// Sama dengan POST /api/profile/password: wajib password lama, minimal 8 karakter, maks 10 percobaan per 15 menit.
+const passwordLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, message: 'Terlalu banyak percobaan, coba lagi dalam 15 menit' } })
+router.post('/profil-saya/password',    authenticate, passwordLimiter, changePassword)
 router.get('/tim-kartu',                authenticate, populateRoles, Pf.getTimKartu)
 router.put('/tim-kartu/:userId/nda',    authenticate, populateRoles, Pf.simpanNda)
 router.get('/mentor',                   authenticate, populateRoles, Mn.daftar)
