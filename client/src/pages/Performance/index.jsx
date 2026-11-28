@@ -87,7 +87,7 @@ function MiniSparkline({ minggu, trend }) {
   )
 }
 
-export default function Performance() {
+export default function Performance({ onNavigate }) {
   const [bulan, setBulan] = useState(NOW.getMonth() + 1)
   const [tahun, setTahun] = useState(NOW.getFullYear())
   const [activeMarket, setActiveMarket] = useState('omsetFiverr')
@@ -119,85 +119,12 @@ export default function Performance() {
 
   return (
     <>
-      <div className="page-header" style={{ marginBottom: 16 }}>
-        <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1>Leaderboard</h1>
-            <p>Studio dan akun jualan terbaik bulan ini, lalu tren omset</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <select className="form-input" style={{ paddingLeft: 10, width: 110 }}
-              value={bulan} onChange={e => setBulan(Number(e.target.value))}>
-              {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
-            </select>
-            <select className="form-input" style={{ paddingLeft: 10, width: 90 }}
-              value={tahun} onChange={e => setTahun(Number(e.target.value))}>
-              {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <Leaderboard bulan={bulan} tahun={tahun} />
+      <Leaderboard bulan={bulan} tahun={tahun} onPilih={(b, t) => { setBulan(b); setTahun(t) }} onNavigate={onNavigate} />
 
       {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      <div className="grid-2" style={{ marginBottom: 24 }}>
-        {/* Ranking */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Ranking Studio — {getBulanLabel(bulan, tahun)}</span>
-            <span className="card-action">{ranking.length} studio</span>
-          </div>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)' }}>Memuat...</div>
-          ) : ranking.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
-              Belum ada laporan bulan ini
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {ranking.map((s, i) => {
-                const pct = (s.totalUsd / maxOmset) * 100
-                return (
-                  <div key={s.studio.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ width: 24, textAlign: 'center', fontSize: 16 }}>
-                      {i < 3 ? MEDAL[i] : <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>#{i+1}</span>}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <div>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{s.studio.nama}</span> <BadgeKolaborasi studio={s.studio} style={{ marginLeft: 6 }} />
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>
-                            {(s.studio.circle ?? s.studio.rumahUsaha)?.nama}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-light)' }}>
-                          {formatUSD(s.totalUsd)}
-                        </span>
-                      </div>
-                      <div style={{ height: 6, background: 'color-mix(in srgb, var(--text) 6%, transparent)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', borderRadius: 99,
-                          width: `${pct}%`,
-                          background: i === 0 ? 'var(--amber)' : i === 1 ? 'var(--text-secondary)' : i === 2 ? '#cd7f32' : 'var(--accent)',
-                          transition: 'width 0.5s ease',
-                        }} />
-                      </div>
-                      <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 11, color: 'var(--text-muted)' }}>
-                        <span>{s.jumlahLaporan}x laporan</span>
-                        {s.avgSemangat && <span>semangat {s.avgSemangat}/5</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Trend Chart */}
+      <div style={{ marginBottom: 24 }}>
+        {/* Trend Chart (Ranking Studio lama diganti Studio Standings di atas) */}
         <div className="card">
           <div className="card-header">
             <span className="card-title">Tren Omset Ekosistem (8 Minggu)</span>

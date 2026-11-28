@@ -96,3 +96,18 @@
   .kd .pita { margin-left: 0; }
 }
 @media (max-width: 640px) { .kd-atas { flex-wrap: nowrap; padding-top: 12px; } .kd-cari { flex: 1 1 auto; min-width: 0; } .kd-cari .ph { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .kd-saya { font-size: 0; gap: 0; padding: 4px; flex: none; } .kd-cari kbd { display: none; } }
+
+/* Leaderboard */
+.kd .kd-chart { display: grid; grid-template-columns: 52px 1fr; gap: 0 10px; padding: 6px 24px 22px; }
+.kd .kd-chart .sumbu { display: flex; flex-direction: column; justify-content: space-between; height: 200px; font-size: 12.5px; color: var(--text-muted); text-align: right; }
+.kd .kd-chart .batang { position: relative; height: 200px; border-left: 1.5px solid var(--line); border-bottom: 1.5px solid var(--line); display: grid; align-items: end; gap: 14px; padding: 0 14px; }
+.kd .kd-chart .batang i { display: block; border: 1.5px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; min-height: 2px; }
+.kd .kd-chart .label-x { grid-column: 2; display: grid; gap: 14px; padding: 6px 14px 0; font-size: 13px; color: var(--text-secondary); text-align: center; }
+.kd .kd-pasar { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.kd .kd-pasar .k { background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 22px; padding: 16px 18px; }
+.kd .kd-pasar .k > span { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; }
+.kd .kd-pasar .k b { display: block; font-family: var(--font-judul); font-weight: 600; font-size: 24px; margin: 4px 0 2px; }
+.kd .kd-pasar .k small { color: var(--text-muted); font-size: 13px; }
+.kd .kd-pasar .k.ada { background: color-mix(in srgb, var(--accent) 28%, var(--bg-card)); }
+.kd .kd-peringkat { font-family: var(--font-judul); font-weight: 600; }
+@media (max-width: 640px) { .kd .kd-chart { padding: 6px 12px 18px; grid-template-columns: 40px 1fr; } .kd .kd-chart .batang, .kd .kd-chart .label-x { gap: 6px; padding: 0 6px; } .kd .kd-chart .label-x { font-size: 11px; padding-top: 6px; word-break: break-word; } }
