@@ -1,4 +1,5 @@
 import prisma from '../prisma.js'
+import { thpDariFf, POS_TIDAK_TETAP } from '../utils/thpFf.js'
 import { kelolaStudio } from '../utils/roles.js'
 import { peranKerja, studioBolehDilihat } from './circle.js'
 import { hitungThp } from '../utils/payroll.js'
@@ -32,6 +33,10 @@ function periode(b, t) {
 async function thpBio(studioId) {
   const rows = await prisma.userRole.findMany({ where: { studioId }, select: { userId: true, takeHomePay: true }, orderBy: { takeHomePay: { sort: 'desc', nulls: 'last' } } })
   const m = new Map(); for (const r of rows) if (!m.has(r.userId)) m.set(r.userId, r.takeHomePay ?? 0)
+  // THP dari Financial Forecasting (28 Nov 2026): pos tetap (Gaji, Makan, Transport, Komunikasi) di FF terbaru studio ini.
+  // Komisi & Bonus tidak diambil karena slip sudah menambahkannya otomatis. Tanpa FF untuk orang itu → THP lama.
+  const ff = await thpDariFf([...m.keys()], { kecuali: POS_TIDAK_TETAP })
+  for (const id of m.keys()) { const v = ff.get(`${id}|${studioId}`); if (v !== undefined) m.set(id, v) }
   return m
 }
 async function anggotaUnit(studioId) {

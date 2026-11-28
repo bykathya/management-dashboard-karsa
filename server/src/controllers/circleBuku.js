@@ -1,4 +1,5 @@
 import prisma from '../prisma.js'
+import { thpDariFf, POS_TIDAK_TETAP } from '../utils/thpFf.js'
 import { SUPER_ADMIN, STAFF_PLUS, hasAnyRole, kelolaStudio, atasanLingkup } from '../utils/roles.js'
 import { resolveWeb, whereLingkup } from '../utils/web.js'
 import { matriksLabaRugi, proyeksi, rencanaKas } from '../utils/labaRugi.js'
@@ -93,12 +94,18 @@ export const KATEGORI_GAJI = 'Biaya Gaji & Uang Makan', KATEGORI_SHU = 'SHU', KA
 export async function gajiShuBio(studioId, bulan) {
   const [y, m] = bulan.split('-').map(Number)
   const [peran, slip, st] = await Promise.all([
-    prisma.userRole.findMany({ where: { studioId, takeHomePay: { gt: 0 }, OR: [{ roleType: 'DIGNITY' }, { user: { statusAktif: true } }] }, select: { userId: true, takeHomePay: true, roleType: true, user: { select: { nama: true } } } }),
+    prisma.userRole.findMany({ where: { studioId, OR: [{ roleType: 'DIGNITY' }, { user: { statusAktif: true } }] }, select: { userId: true, takeHomePay: true, roleType: true, user: { select: { nama: true } } } }),
     prisma.penggajian.findMany({ where: { studioId, bulan: m, tahun: y }, select: { id: true, userId: true, thp: true, status: true, tanggalBayar: true, user: { select: { nama: true } } } }),
     prisma.studio.findUnique({ where: { id: studioId }, select: { statusShu: true, totalShu: true } }),
   ])
   const orang = new Map()
-  for (const r of peran) { const o = orang.get(r.userId); if (!o || r.takeHomePay > o.jumlah) orang.set(r.userId, { userId: r.userId, nama: r.user.nama, jumlah: r.takeHomePay, dari: 'Bio' }) }
+  // THP dari Financial Forecasting bila ada (28 Nov 2026), sama dengan Penggajian; selain itu THP lama.
+  const ff = await thpDariFf([...new Set(peran.map(r => r.userId))], { kecuali: POS_TIDAK_TETAP })
+  for (const r of peran) {
+    const v = ff.get(`${r.userId}|${studioId}`), jumlah = v !== undefined ? v : (r.takeHomePay ?? 0)
+    if (!(jumlah > 0)) continue
+    const o = orang.get(r.userId); if (!o || jumlah > o.jumlah) orang.set(r.userId, { userId: r.userId, nama: r.user.nama, jumlah, dari: v !== undefined ? 'FF' : 'Bio' })
+  }
   // Dignity (12 Nov 2026, masukan tim): orang yang di unit ini HANYA berperan DIGNITY → kelompok & kategori buku besar "Dignity", bukan gaji
   const kerja = new Set(peran.filter(r => r.roleType !== 'DIGNITY').map(r => r.userId))
   const dignity = new Set(peran.filter(r => r.roleType === 'DIGNITY' && !kerja.has(r.userId)).map(r => r.userId))
