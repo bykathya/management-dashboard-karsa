@@ -12,7 +12,6 @@ const tglId = (d) => (d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeri
 const hariIni = () => new Date(new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10) + 'T00:00:00Z')
 const sisaHari = (o) => (o.kontrakAkhir ? Math.ceil((new Date(o.kontrakAkhir) - hariIni()) / 864e5) : null)
 const nDok = (o) => DOK.filter(([k]) => o.dokumen[k]).length
-const inisial = (n) => String(n ?? '?').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase()
 const warnaPeran = (o) => (o.manajemen ? ['var(--text)', 'var(--bg-card)'] : o.peranTipe === 'KOORDINATOR' || o.peranTipe === 'PENDAMPING' ? ['var(--pink-candy)', 'var(--on-pink)'] : o.peranTipe === 'ADMIN_FUNGSIONAL' ? ['var(--accent)', 'var(--on-accent)'] : ['var(--amber-subtle)', 'var(--text)'])
 
 function Kontrak({ o }) {
@@ -87,7 +86,7 @@ function Detail({ o, studios, onTutup, onUbah }) {
     <div role="dialog" aria-modal="true" aria-label={`Data ${o.nama}`} onClick={onTutup} style={{ position: 'fixed', inset: 0, background: 'var(--backdrop)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 12px', overflowY: 'auto' }}>
       <div className="card" onClick={e => e.stopPropagation()} style={{ width: 'min(760px, 100%)', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <span className="hr-inisial" style={{ width: 52, height: 52, fontSize: 18 }}>{inisial(o.nama)}</span>
+          <span className="hr-inisial" style={{ width: 52, height: 52, fontSize: 18, overflow: 'hidden', padding: 0 }}><img src={o.fotoUrl || stikerNama(o.nama)} alt="" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { const cadangan = stikerNama(o.nama); if (!e.currentTarget.src.endsWith(cadangan)) e.currentTarget.src = cadangan }} /></span>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontFamily: 'var(--font-judul)', fontWeight: 600, fontSize: 18 }}>{o.nama}</div><div style={arti}>{o.peran}{o.posisi ? ` · ${o.posisi}` : ''} · {o.email}</div>
             <div style={arti}>Studio: {o.studioIds.map(id => studios.find(s => s.id === id)?.nama).filter(Boolean).join(', ') || '—'} · Bergabung {tglId(o.tanggalMasuk) ?? '—'}</div></div>
           <button type="button" className="btn btn-secondary btn-sm" onClick={onTutup} aria-label="Tutup">Tutup</button>
