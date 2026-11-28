@@ -32,7 +32,7 @@ export const getLeaderboard = async (req, res) => {
     const { rangeEnd } = getMonthAttributionRange(bulan, tahun)
 
     const [studios, semuaLaporan] = await Promise.all([
-      prisma.studio.findMany({ where: { statusAktif: true, ...STUDIO_DIHITUNG, ...(lingkup.semua ? {} : { id: { in: [...lingkup.studioIds] } }) }, select: { id: true, nama: true } }),
+      prisma.studio.findMany({ where: { statusAktif: true, ...STUDIO_DIHITUNG, ...(lingkup.semua ? {} : { id: { in: [...lingkup.studioIds] } }) }, select: { id: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true } } } } } }),
       prisma.weeklyReport.findMany({
         where: { ...LAPORAN_DIHITUNG, ...filterStudioId(lingkup) },
         select: { studioId: true, periodeAwal: true, periodeAkhir: true, totalUsd: true, kurs: true, ...Object.fromEntries(KOLOM.map(k => [k.kolom, true])) },
@@ -53,7 +53,7 @@ export const getLeaderboard = async (req, res) => {
     const studioRank = studios.map(s => {
       const reps = laporanBulan.filter(r => r.studioId === s.id), repsLalu = laporanLalu.filter(r => r.studioId === s.id)
       const usd = r2(reps.reduce((a, r) => a + r.totalUsd, 0)), usdLalu = r2(repsLalu.reduce((a, r) => a + r.totalUsd, 0))
-      return { studioId: s.id, nama: s.nama, usd, idr: Math.round(reps.reduce((a, r) => a + r.totalUsd * r.kurs, 0)), usdLalu, jumlahLaporan: reps.length }
+      return { studioId: s.id, nama: s.nama, koordinator: s.userRoles.map(r => r.user?.nama).filter(Boolean).join(', ') || null, usd, idr: Math.round(reps.reduce((a, r) => a + r.totalUsd * r.kurs, 0)), usdLalu, jumlahLaporan: reps.length }
     }).sort((a, b) => b.usd - a.usd || a.nama.localeCompare(b.nama))
 
     // ATH / ATL per bulan (hanya bulan yang punya laporan)
@@ -73,20 +73,36 @@ export const getLeaderboard = async (req, res) => {
     const akhir = new Date(`${kunci(bulan === 12 ? 1 : bulan + 1, bulan === 12 ? tahun + 1 : tahun)}-01T00:00:00+07:00`)
     const akunList = await prisma.akunProduksi.findMany({
       where: { studioId: { in: [...idAktif] } },
-      select: { id: true, platform: true, namaAkun: true, studio: { select: { nama: true } },
+      select: { id: true, platform: true, namaAkun: true, studioId: true, studio: { select: { nama: true } },
         orders: { where: { ...ORDER_KLIEN, status: { not: 'BATAL' }, tanggalMasuk: { gte: awal, lt: akhir } }, select: { nilaiKotor: true, mataUang: true, kurs: true, nilaiUsd: true } } },
     })
     const akun = akunList
       .filter(a => String(a.platform).toLowerCase() !== 'internal')
       .map(a => {
         const usd = a.orders.reduce((s, o) => s + (o.mataUang === 'USD' && o.nilaiUsd != null ? Number(o.nilaiUsd) : (o.nilaiKotor ?? 0) / (o.mataUang === 'USD' && o.kurs > 0 ? o.kurs : kurs)), 0)
-        return { akunId: a.id, platform: a.platform, namaAkun: a.namaAkun, studio: a.studio?.nama ?? null, jumlahOrder: a.orders.length, usd: r2(usd) }
+        return { akunId: a.id, platform: a.platform, namaAkun: a.namaAkun, studioId: a.studioId, studio: a.studio?.nama ?? null, jumlahOrder: a.orders.length, usd: r2(usd) }
       })
       .sort((a, b) => b.usd - a.usd || b.jumlahOrder - a.jumlahOrder || a.namaAkun.localeCompare(b.namaAkun))
     const platformAkun = [...akun.reduce((m, a) => {
       const g = m.get(a.platform) ?? { platform: a.platform, jumlahAkun: 0, jumlahOrder: 0, usd: 0 }
       g.jumlahAkun++; g.jumlahOrder += a.jumlahOrder; g.usd = r2(g.usd + a.usd); m.set(a.platform, g); return m
     }, new Map()).values()].sort((a, b) => b.usd - a.usd)
+
+    // Studio Standings (desain Karsa 28 Nov 2026): ATH/ATL tiap studio + akun jualannya.
+    const perStudioBulan = new Map()
+    for (const r of semuaLaporan) {
+      if (!idAktif.has(r.studioId)) continue
+      const { bulan: b, tahun: t } = bulanLaporan(r), k = `${r.studioId}|${kunci(b, t)}`
+      perStudioBulan.set(k, (perStudioBulan.get(k) ?? 0) + r.totalUsd)
+    }
+    for (const s of studioRank) {
+      const nilai = [...perStudioBulan].filter(([k]) => k.startsWith(`${s.studioId}|`)).map(([, v]) => r2(v))
+      s.ath = nilai.length ? Math.max(...nilai) : null
+      s.atl = nilai.length ? Math.min(...nilai) : null
+      const milik = akun.filter(a => a.studioId === s.studioId)
+      s.jumlahAkun = milik.length
+      s.platform = [...new Set(milik.map(a => a.platform))]
+    }
 
     return res.json({
       success: true,

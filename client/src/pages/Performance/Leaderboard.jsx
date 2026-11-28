@@ -1,127 +1,123 @@
+import { useState } from 'react'
 import { useApi } from '../../hooks/useApi'
-import { formatUSD, formatRp, getBulanLabel } from '../../utils/format'
+import { formatRp, getBulanLabel } from '../../utils/format'
+import { ECOSYSTEM_NAME_FULL } from '../../config/ecosystem'
+import { stikerNama } from '../../components/layout/Topbar'
 
-// Bagian atas menu Executive › Leaderboard (Karsa, 27 Nov 2026, pola web Mas Zakin).
+// Leaderboard sesuai desain yang disepakati (Karsa, 28 Nov 2026; desain/ringkasan/leaderboard.html).
 // Data: GET /api/performance/leaderboard. Omset resmi dari Laporan Omset; akun jualan dari order web kerja harian.
-const kartu = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '14px 16px', minWidth: 0 }
-const judulKecil = { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }
-const arti = { fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 4 }
-const MEDALI = ['🥇', '🥈', '🥉']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+const PLATFORM = ['VGen', 'Ko-fi', 'Artistree', 'Fiverr', 'Etsy', 'Komunitas', 'Lain-lain']
+const WARNA_LAMBANG = ['var(--accent)', 'var(--pink-candy)', 'var(--kd-kuning)']
+const usd = (n) => (n == null ? '—' : '$' + Math.round(n).toLocaleString('en-US'))
+const skalaAtas = (m) => { if (m <= 0) return 4; const p = 10 ** Math.floor(Math.log10(m)); return Math.ceil(m / p) * p }
 
-function Persen({ v }) {
-  if (v == null) return <span style={{ color: 'var(--text-muted)' }}>belum ada pembanding</span>
-  const naik = v >= 0
-  return <span style={{ color: naik ? 'var(--green)' : 'var(--red)', fontWeight: 700 }}>{naik ? '▲' : '▼'} {Math.abs(v).toLocaleString('id-ID', { maximumFractionDigits: 1 })}% dari bulan lalu</span>
-}
-
-function Baris({ no, nama, sub, nilai, maks }) {
-  const pct = maks > 0 ? Math.max(2, (nilai / maks) * 100) : 0
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 10, alignItems: 'center' }}>
-      <span style={{ fontWeight: 800, textAlign: 'center' }}>{MEDALI[no - 1] ?? no}</span>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nama}</div>
-        {sub && <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{sub}</div>}
-        <div style={{ height: 6, borderRadius: 99, background: 'var(--track)', marginTop: 4 }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 99, background: 'var(--accent)' }} />
-        </div>
-      </div>
-      <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{formatUSD(nilai)}</span>
-    </div>
-  )
-}
-
-export default function Leaderboard({ bulan, tahun }) {
+export default function Leaderboard({ bulan, tahun, onPilih, onNavigate }) {
   const { data, loading, error } = useApi(`/api/performance/leaderboard?bulan=${bulan}&tahun=${tahun}`, [bulan, tahun])
-  if (loading) return <div className="card" style={{ marginBottom: 24, color: 'var(--text-muted)' }}>Memuat leaderboard…</div>
-  if (error || !data) return error ? <div className="login-error" style={{ marginBottom: 16 }}>{error}</div> : null
-
-  const topStudio = data.studio.find(s => s.usd > 0)
-  const topAkun = data.akun.find(a => a.usd > 0 || a.jumlahOrder > 0)
-  const maksStudio = Math.max(...data.studio.map(s => s.usd), 0)
-  const maksAkun = Math.max(...data.akun.map(a => a.usd), 0)
+  const [lihatAkun, setLihatAkun] = useState(false)
+  const now = new Date()
+  const pilihan = Array.from({ length: 12 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); return { v: `${d.getFullYear()}-${d.getMonth() + 1}`, l: `${MONTHS[d.getMonth()]} ${d.getFullYear()}` } })
   const label = getBulanLabel(bulan, tahun)
+  const kurs = data?.kurs ?? 17000
+  const studio = data?.studio ?? []
+  // Warna lambang mengikuti urutan nama (bukan peringkat) supaya tiap studio tetap warnanya.
+  const urutNama = [...studio].sort((a, b) => a.nama.localeCompare(b.nama)).map(s => s.studioId)
+  const warna = (id) => WARNA_LAMBANG[Math.max(0, urutNama.indexOf(id)) % 3]
+  const total = data?.global?.totalUsd ?? 0
+  const top = studio.find(s => s.usd > 0)
+  const topAkun = (data?.akun ?? []).find(a => a.usd > 0)
+  const maks = skalaAtas(Math.max(0, ...studio.map(s => s.usd)))
+  const totalAkun = (data?.platformAkun ?? []).reduce((a, p) => a + p.usd, 0)
+  const perPlatform = (nama) => {
+    const daftar = data?.platformAkun ?? []
+    const cocok = nama === 'Lain-lain'
+      ? daftar.filter(p => !PLATFORM.slice(0, -1).some(x => x.toLowerCase() === String(p.platform).toLowerCase()))
+      : daftar.filter(p => String(p.platform).toLowerCase() === nama.toLowerCase())
+    return cocok.reduce((a, p) => ({ usd: a.usd + p.usd, akun: a.akun + p.jumlahAkun }), { usd: 0, akun: 0 })
+  }
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      {/* Tiga kartu utama */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 16 }}>
-        <div style={kartu}>
-          <div style={judulKecil}>🏆 Top Performing Studio</div>
-          <div style={{ fontFamily: 'var(--font-judul)', fontSize: 18, fontWeight: 600 }}>{topStudio?.nama ?? '—'}</div>
-          <div style={{ fontWeight: 700 }}>{formatUSD(topStudio?.usd ?? 0)}</div>
-          <div style={arti}>Studio dengan omset terbesar di {label}.</div>
+    <div className="kd">
+      <div className="kepala">
+        <h1>Leaderboard</h1>
+        <span className="chip">{label}</span>
+        <div className="pita"><span style={{ fontWeight: 600 }}>{studio.length} Studio</span>
+          <select aria-label="Bulan" value={`${tahun}-${bulan}`} onChange={e => { const [t, b] = e.target.value.split('-').map(Number); onPilih(b, t) }}>
+            {pilihan.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+          </select>
+          <span className="lime" title={`Kurs Rp ${Math.round(kurs).toLocaleString('id-ID')} per USD`}>Rp {Math.round(kurs / 1000)}k</span>
         </div>
-        <div style={kartu}>
-          <div style={judulKecil}>⭐ Top Market Account</div>
-          <div style={{ fontFamily: 'var(--font-judul)', fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topAkun ? topAkun.namaAkun : '—'}</div>
-          <div style={{ fontWeight: 700 }}>{topAkun ? `${formatUSD(topAkun.usd)} · ${topAkun.platform}` : formatUSD(0)}</div>
-          <div style={arti}>Akun jualan dengan nilai order terbesar bulan ini.</div>
-        </div>
-        <div style={kartu}>
-          <div style={judulKecil}>🌍 Global Revenue</div>
-          <div style={{ fontFamily: 'var(--font-judul)', fontSize: 18, fontWeight: 600 }}>{formatUSD(data.global.totalUsd)}</div>
-          <div style={{ fontSize: 12.5 }}>≈ {formatRp(data.global.totalIdr)} · <Persen v={data.global.perubahanPct} /></div>
-          <div style={arti}>Total omset semua studio dari Laporan Omset.</div>
+      </div>
+      <p className="sub">Peringkat omset studio dan akun jualan {ECOSYSTEM_NAME_FULL}. Angka terhitung otomatis dari Daily Sheet tiap studio.</p>
+      {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      <div className="stats">
+        <div className="stat lime"><span>Top Performing Studio<small className="arti">studio dengan omset tertinggi</small></span><b>{loading ? '…' : usd(top?.usd ?? 0)}</b>
+          <div className="bawah">{top ? <span className="chip" style={{ color: 'var(--text)' }}>#1 {top.nama}</span> : <span>Belum ada omset</span>}</div></div>
+        <div className="stat pink"><span>Top Market Account<small className="arti">akun jualan dengan omset tertinggi</small></span><b>{loading ? '…' : usd(topAkun?.usd ?? 0)}</b>
+          <div className="bawah"><span>{topAkun ? `${topAkun.namaAkun} · ${topAkun.platform}${topAkun.studio ? ` · ${topAkun.studio}` : ''}` : 'Belum ada omset'}</span></div></div>
+        <div className="stat"><span>Global Revenue<small className="arti">total omset semua studio</small></span><b>{loading ? '…' : usd(total)}</b>
+          <div className="bawah"><span>{formatRp(data?.global?.totalIdr ?? 0)} · {label}</span></div></div>
+      </div>
+
+      <div className="kartu">
+        <div className="judul-tabel"><div><h2>Studio Revenue ({label})<small className="arti">omset tiap studio bulan ini</small></h2></div><span className="ml chip">USD</span></div>
+        <div className="kd-chart">
+          <div className="sumbu">{[4, 3, 2, 1, 0].map(i => <span key={i}>{usd((maks * i) / 4)}</span>)}</div>
+          <div className="batang" style={{ gridTemplateColumns: `repeat(${Math.max(studio.length, 1)}, 1fr)` }}>
+            {studio.map(s => <i key={s.studioId} title={`${s.nama}: ${usd(s.usd)}`} style={{ height: `${Math.max(1, (s.usd / maks) * 100)}%`, background: 'var(--accent)' }} />)}
+          </div>
+          <div className="label-x" style={{ gridTemplateColumns: `repeat(${Math.max(studio.length, 1)}, 1fr)` }}>{studio.map(s => <span key={s.studioId}>{s.nama}</span>)}</div>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginBottom: 16 }}>
-        {/* Peringkat studio */}
-        <div className="card">
-          <div className="card-header"><span className="card-title">Peringkat Studio — {label}</span></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {data.studio.length === 0 ? <div style={{ color: 'var(--text-muted)' }}>Belum ada studio.</div>
-              : data.studio.map((s, i) => <Baris key={s.studioId} no={i + 1} nama={s.nama} sub={`bulan lalu ${formatUSD(s.usdLalu)}`} nilai={s.usd} maks={maksStudio} />)}
-          </div>
-        </div>
-        {/* Omset per platform */}
-        <div className="card">
-          <div className="card-header"><span className="card-title">Omset per Platform</span></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {data.global.perPlatform.map(p => (
-              <div key={p.platform} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 6 }}>
-                <span>{p.platform}</span><b>{formatUSD(p.usd)}</b>
-              </div>
-            ))}
-          </div>
-          <div style={arti}>Ko-fi, Artistree, dan platform lain masuk "Lainnya" di Laporan Omset. Rinciannya ada di Market Accounts di bawah.</div>
-        </div>
+      <h2 style={{ margin: '0 0 12px', fontSize: 22 }}>Market Accounts<small className="arti">omset per platform jualan · share = porsi dari total omset</small></h2>
+      <div className="kd-pasar">
+        {PLATFORM.map(p => {
+          const g = perPlatform(p)
+          return (
+            <div key={p} className={`k${g.akun ? ' ada' : ''}`}>
+              <span>{p}<span aria-hidden="true">↗</span></span>
+              <b>{usd(g.usd)}</b>
+              <small>{g.akun} akun · {totalAkun > 0 ? Math.round((g.usd / totalAkun) * 100) : 0}% share</small>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Market Accounts */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-header"><span className="card-title">Market Accounts (akun jualan) — {label}</span><span className="card-action">{data.akun.length} akun</span></div>
-        {data.platformAkun.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-            {data.platformAkun.map(p => (
-              <span key={p.platform} style={{ border: '1.5px solid var(--line)', borderRadius: 'var(--pill)', padding: '4px 12px', fontSize: 12.5 }}>
-                <b>{p.platform}</b> · {p.jumlahAkun} akun · {formatUSD(p.usd)}
-              </span>
-            ))}
-          </div>
+      <div className="kartu">
+        <div className="judul-tabel">
+          <div><h2>Studio Standings<small className="arti">peringkat studio</small></h2><p>ATH = omset bulanan tertinggi · ATL = omset bulanan terendah sejak studio mulai mencatat</p></div>
+          <button type="button" className="tombol ml" onClick={() => setLihatAkun(v => !v)}>{lihatAkun ? 'Tutup daftar akun' : 'Inspect Accounts →'}</button>
+        </div>
+        {lihatAkun && (
+          <div className="scroll" style={{ marginBottom: 12 }}><table className="hp">
+            <thead><tr><th>Akun</th><th>Platform</th><th>Studio</th><th className="r">Order</th><th className="r">Omset</th></tr></thead>
+            <tbody>
+              {!(data?.akun ?? []).length && <tr><td colSpan={5} className="kosong">Belum ada akun jualan.</td></tr>}
+              {(data?.akun ?? []).map(a => (
+                <tr key={a.akunId}><td data-label="Akun" style={{ fontWeight: 600 }}>{a.namaAkun}</td><td data-label="Platform">{a.platform}</td><td data-label="Studio">{a.studio ?? '—'}</td>
+                  <td className="r num" data-label="Order">{a.jumlahOrder}</td><td className="r num" data-label="Omset">{usd(a.usd)}<span className="usd">{formatRp(Math.round(a.usd * kurs))}</span></td></tr>
+              ))}
+            </tbody>
+          </table></div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {data.akun.length === 0 ? <div style={{ color: 'var(--text-muted)' }}>Belum ada akun jualan.</div>
-            : data.akun.map((a, i) => <Baris key={a.akunId} no={i + 1} nama={a.namaAkun} sub={`${a.platform} · ${a.studio ?? '—'} · ${a.jumlahOrder} order`} nilai={a.usd} maks={maksAkun} />)}
-        </div>
-        <div style={arti}>Dihitung dari order yang dicatat di web kerja harian (tanggal masuk bulan ini, tanpa order batal), nilai sebelum potongan platform.</div>
-      </div>
-
-      {/* ATH / ATL */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-        <div style={{ ...kartu, borderLeft: '4px solid var(--accent)' }}>
-          <div style={judulKecil}>📈 ATH (bulan tertinggi)</div>
-          <div style={{ fontFamily: 'var(--font-judul)', fontSize: 17, fontWeight: 600 }}>{data.ath ? formatUSD(data.ath.usd) : '—'}</div>
-          <div>{data.ath ? getBulanLabel(data.ath.bulan, data.ath.tahun) : 'belum ada laporan'}</div>
-          <div style={arti}>Omset bulanan paling tinggi sejak mulai lapor.</div>
-        </div>
-        <div style={{ ...kartu, borderLeft: '4px solid var(--pink)' }}>
-          <div style={judulKecil}>📉 ATL (bulan terendah)</div>
-          <div style={{ fontFamily: 'var(--font-judul)', fontSize: 17, fontWeight: 600 }}>{data.atl ? formatUSD(data.atl.usd) : '—'}</div>
-          <div>{data.atl ? getBulanLabel(data.atl.bulan, data.atl.tahun) : 'belum ada laporan'}</div>
-          <div style={arti}>Omset bulanan paling rendah dari {data.jumlahBulanRiwayat} bulan yang ada laporannya.</div>
-        </div>
+        <div className="scroll"><table className="hp">
+          <thead><tr><th>Rank</th><th>Studio</th><th>Markets<small className="arti">platform</small></th><th className="r">ATH / ATL</th><th className="r">Total Omset</th></tr></thead>
+          <tbody>
+            {loading && <tr><td colSpan={5} className="kosong">Memuat…</td></tr>}
+            {studio.map((s, i) => (
+              <tr key={s.studioId}>
+                <td className="kd-peringkat" data-label="Rank">#{String(i + 1).padStart(2, '0')}</td>
+                <td data-label="Studio"><div className="studio"><span className="lambang" style={{ background: warna(s.studioId) }}>{s.nama?.[0]?.toUpperCase()}</span>
+                  <div>{s.nama}<div className="orang" style={{ gap: 6, fontWeight: 400, fontSize: 13, color: 'var(--text-muted)' }}>{s.koordinator && <img src={stikerNama(s.koordinator.split(',')[0])} alt="" style={{ width: 22, height: 22 }} />}{s.koordinator ?? 'Belum ada koordinator'} · {s.jumlahAkun ?? 0} akun</div></div></div></td>
+                <td data-label="Markets">{s.platform?.length ? s.platform.join(', ') : <span className="kosong">—</span>}</td>
+                <td className="r num" data-label="ATH / ATL">ATH {usd(s.ath ?? 0)}<span className="usd">ATL {usd(s.atl ?? 0)}</span></td>
+                <td className="r num" data-label="Total Omset">{usd(s.usd)}<span className="usd">{formatRp(s.idr)}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
       </div>
     </div>
   )
