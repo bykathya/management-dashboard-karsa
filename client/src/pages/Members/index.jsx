@@ -3,6 +3,7 @@ import { useApi } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import { getRoleLabel, getHighestRole, ROLE_TIER, TIER_BADGE, STATUS_KEANGGOTAAN, STATUS_PROGRAM_SISWA, getRoleOrgUnit, getRoleCircle, getRoleRumahUsaha } from '../../utils/roles'
 import api from '../../services/api'
+import { fotoAtauStiker } from '../../components/layout/Topbar'
 import { downloadCsv } from '../../utils/csv'
 import { ECOSYSTEM_NAME } from '../../config/ecosystem'
 import { onActivate } from '../../utils/a11y'
@@ -333,8 +334,8 @@ function MemberDrawer({ member, onClose, onNonaktifkan, onRoleUpdated, canManage
         <div className="drawer-body">
           {/* Avatar + Nama */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div className="drawer-avatar" style={{ background: color }}>
-              {initials(member.nama)}
+            <div className="drawer-avatar" style={{ background: 'var(--accent)', overflow: 'hidden', padding: 0 }}>
+              <img src={fotoAtauStiker(member.nama, member.fotoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
             </div>
             <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 4 }}>{member.nama}</div>
             <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
@@ -1390,7 +1391,7 @@ export default function Members({ openUserId }) {
                     <div key={m.id} className="member-card" onClick={() => openMember(m)}
                       role="button" tabIndex={0} onKeyDown={onActivate(() => openMember(m))}
                       style={{ cursor: 'pointer' }}>
-                      <div className="member-avatar" style={{ background: color }}>{initials(m.nama)}</div>
+                      <div className="member-avatar" style={{ background: 'var(--accent)', overflow: 'hidden', padding: 0 }}><img src={fotoAtauStiker(m.nama, m.fotoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} /></div>
                       <div>
                         <div className="member-name">{m.nama}</div>
                         <div className="member-role">{top ? getRoleLabel(top.roleType) : 'Tanpa posisi'}</div>
@@ -1433,7 +1434,7 @@ export default function Members({ openUserId }) {
               <div key={m.id} className="member-card" onClick={() => openMember(m)}
                 role="button" tabIndex={0} onKeyDown={onActivate(() => openMember(m))}
                 style={{ cursor: 'pointer' }}>
-                <div className="member-avatar" style={{ background: color }}>{initials(m.nama)}</div>
+                <div className="member-avatar" style={{ background: 'var(--accent)', overflow: 'hidden', padding: 0 }}><img src={fotoAtauStiker(m.nama, m.fotoUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} /></div>
                 <div>
                   <div className="member-name">{m.nama}</div>
                   <div className="member-role">{top ? getRoleLabel(top.roleType) : 'Tanpa posisi'}</div>

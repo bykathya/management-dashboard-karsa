@@ -328,3 +328,28 @@
 @media (max-width: 640px) { .kd .pf-grid { grid-template-columns: 1fr; } }
 .kd.pf-satu .form-input { border-radius: 14px; border: 1.5px solid var(--line); min-height: 44px; }
 .kd.pf-satu textarea.form-input { min-height: 80px; padding: 10px 14px; }
+
+/* ═══ Halaman lama ikut desain yang disepakati (28 Nov 2026) ═══════════════════════════════════
+   Halaman yang belum ditulis ulang (SDM, Keuangan, Unit, Goals, Kepatuhan, dll.) memakai kelas lama
+   (.page-header, .card, .stat-card, .btn, .form-input, tabel). Di sini tampilannya disamakan dengan .kd. */
+.app.kd-app .page-header h1 { font-weight: 600; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.05; letter-spacing: -.01em; }
+.app.kd-app .page-header p { font-size: 15px; color: var(--text-secondary); }
+.app.kd-app .card { border-radius: 26px; border: 1.5px solid var(--line) !important; }
+.app.kd-app .card-title { font-family: var(--font-judul); font-weight: 600; font-size: 18px; letter-spacing: -.01em; }
+.app.kd-app .stat-card { border-radius: 26px; padding: 20px 22px; }
+.app.kd-app .stat-grid > .stat-card:nth-child(1) { background: var(--accent); color: #111; }
+.app.kd-app .stat-grid > .stat-card:nth-child(2) { background: var(--pink-candy); color: #111; }
+.app.kd-app .stat-grid > .stat-card:nth-child(1) *, .app.kd-app .stat-grid > .stat-card:nth-child(2) * { color: #111 !important; }
+.app.kd-app .stat-value, .app.kd-app .stat-card .value { font-family: var(--font-judul); font-weight: 600; }
+.app.kd-app .btn { min-height: 40px; font-weight: 600; }
+.app.kd-app .btn-primary { background: var(--accent); color: #111; }
+.app.kd-app .form-input, .app.kd-app .page-content select, .app.kd-app .page-content textarea { border-radius: 14px; border: 1.5px solid var(--line); }
+.app.kd-app .form-input { min-height: 44px; }
+.app.kd-app .page-content thead th { font-size: 12.5px; letter-spacing: .04em; border-bottom: 1.5px solid var(--line); }
+.app.kd-app .page-content tbody td { font-size: 14.5px; padding: 12px 14px; }
+.app.kd-app .badge { border-radius: 999px; border: 1.5px solid var(--line); font-weight: 700; }
+.app.kd-app .drawer-panel { border-radius: 26px 0 0 26px; border: 1.5px solid var(--line); }
+.modal-box { border-radius: 26px; border: 1.5px solid var(--line); }
+.modal-title { font-family: var(--font-judul); font-weight: 600; font-size: 18px; }
+.app.kd-app .drawer-info-label { text-transform: uppercase; letter-spacing: .04em; font-size: 12px; }
+.app.kd-app .tab-bar, .app.kd-app .tabs { gap: 8px; }
