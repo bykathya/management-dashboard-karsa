@@ -30,7 +30,7 @@ function Kartu({ o, onBuka }) {
       <div className="hr-foto">
         <span className="hr-tag" style={{ background: bg, color: fg }}>{o.peran}</span>
         <span className="hr-tag kanan" style={{ background: n === 4 ? 'var(--accent)' : 'var(--bg-card)', color: n === 4 ? 'var(--on-accent)' : 'var(--text)' }}>DOC {n}/4</span>
-        <span className="hr-bulat" style={{ background: bg === 'var(--accent)' || o.manajemen ? 'var(--accent)' : bg }}><img src={o.fotoUrl || stikerNama(o.nama)} alt="" referrerPolicy="no-referrer" /></span>
+        <span className="hr-bulat" style={{ background: bg === 'var(--accent)' || o.manajemen ? 'var(--accent)' : bg }}><img src={o.fotoUrl || stikerNama(o.nama)} alt="" referrerPolicy="no-referrer" onError={e => { const cadangan = stikerNama(o.nama); if (!e.currentTarget.src.endsWith(cadangan)) e.currentTarget.src = cadangan }} /></span>
       </div>
       <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <b style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.nama}</b>
@@ -138,7 +138,7 @@ export default function HrDatabase({ onNavigate }) {
   }, [q, saring])
   const grup = useMemo(() => {
     if (!d) return []
-    const g = [['manajemen', 'Manajemen', d.orang.filter(o => o.manajemen)], ...d.studios.map(s => [s.id, s.nama, d.orang.filter(o => !o.manajemen && o.studioIds.includes(s.id))])]
+    const g = [['manajemen', 'Manajemen', d.orang.filter(o => o.manajemen)], ...d.studios.map(s => [s.id, s.nama, d.orang.filter(o => o.studioIds.includes(s.id)).map(o => (o.manajemen && o.peranStudio?.[s.id] ? { ...o, manajemen: false, peran: o.peranStudio[s.id].label, peranTipe: o.peranStudio[s.id].tipe, posisi: o.peranStudio[s.id].label } : o))])]
     return g.filter(([id]) => unit === 'SEMUA' || id === unit).map(([id, nama, isi]) => [id, nama, isi.filter(lolos)]).filter(([, , isi]) => isi.length)
   }, [d, unit, lolos])
   if (!d) return <div className="kd"><div className="kartu" style={{ padding: 24, color: 'var(--text-muted)' }}>{galat || 'Memuat…'}</div></div>
