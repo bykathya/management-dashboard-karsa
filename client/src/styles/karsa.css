@@ -175,3 +175,51 @@
   .kd .kat-h, .kd .sub-h { padding-left: 12px; padding-right: 12px; }
   .kd .kaki { position: static; }
 }
+
+/* Weekly & Monthly Report */
+.kd .ekspor { display: flex; gap: 6px; flex-wrap: wrap; }
+.kd .ekspor button { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); font-weight: 600; font-size: 13.5px; cursor: pointer; }
+.kd .ekspor button:disabled { opacity: .5; cursor: default; }
+.kd .pita select + select { margin-left: 2px; }
+.kd .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.kd .chips button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg-card); color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer; }
+.kd .chips button.on { background: #111; color: var(--accent); }
+.kd .enam { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
+.kd .enam > div { border: 1.5px solid var(--line); border-radius: 20px; padding: 14px 16px; background: var(--bg-card); }
+.kd .enam span { font-size: 12.5px; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: .03em; }
+.kd .enam b { display: block; font-family: var(--font-judul); font-weight: 600; font-size: 26px; margin: 4px 0 0; }
+.kd .enam small { opacity: .7; font-size: 12.5px; }
+.kd .enam .hitam { background: #111; color: #f3f1ea; }
+.kd .dua { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 900px) { .kd .dua { grid-template-columns: 1fr; } }
+.kd .daftar-akun { display: flex; flex-direction: column; gap: 8px; padding: 0 20px 20px; }
+.kd .daftar-akun > div { border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 14px; background: var(--bg-primary); }
+.kd .bar i { background: var(--accent); }
+.kd .pic { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kd .pic .k { background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 22px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.kd .kecil4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.kd .kecil4 div { border: 1.5px solid var(--border-hover); border-radius: 12px; padding: 6px; text-align: center; font-size: 12px; background: var(--bg-primary); }
+.kd .kecil4 b { display: block; font-size: 15px; }
+.kd .kotak-putih { margin-top: 10px; border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 12px; background: var(--bg-primary); font-size: 13.5px; }
+.kd .mini-tren { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: end; margin-top: 10px; text-align: center; font-size: 12.5px; }
+.kd .mini-tren .tiang { height: 60px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg-primary); display: flex; align-items: flex-end; overflow: hidden; }
+.kd .mini-tren .tiang i { display: block; width: 100%; }
+.kd .titik-minggu { display: flex; justify-content: space-between; margin-top: 14px; font-size: 12.5px; color: var(--text-muted); text-align: center; }
+.kd .gelap { background: #111; color: #f3f1ea; border-radius: 26px; padding: 20px 22px; margin-bottom: 20px; border: 1.5px solid var(--line); }
+.kd .gelap .arti, .kd .gelap small, .kd .gelap .mute { color: #b9b7ad; }
+.kd .gelap .kotak { border: 1.5px solid #5a5a55; border-radius: 18px; padding: 14px 16px; }
+.kd .gelap .bar { background: #3d3d39; }
+.kd .gelap .chip.gelap-chip { background: transparent; color: #f3f1ea; border-color: #5a5a55; }
+.kd .gelap .chips button { color: #111; background: #fffdf6; }
+.kd .gelap .chips button.on { background: var(--accent); color: #111; }
+.kd .tiga { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.kd .baris-uang { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; }
+.kd .kaki-gelap { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; border-top: 1.5px solid #3d3d39; padding-top: 12px; margin-top: 4px; }
+.kd .tabel-gelap th { color: #b9b7ad; border-bottom-color: #5a5a55; }
+.kd .tabel-gelap td { color: #f3f1ea; border-bottom-color: #3d3d39; }
+.kd .tabel-gelap tbody tr:hover td { background: #1c1c1c; }
+.kd .tabel-gelap tfoot td { border-top-color: #5a5a55; color: #f3f1ea; }
+
+@media (max-width: 1200px) { .kd .enam { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .kd .enam { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kd .enam b { font-size: 22px; } }
+.kd .stat.lime .bar i, .kd .stat.pink .bar i { background: #111; }

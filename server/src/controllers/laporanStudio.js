@@ -90,11 +90,15 @@ export const mingguan = wrap(async (req, res) => {
 export const bulanan = wrap(async (req, res) => {
   const c = await siapkan(req, res); if (!c) return
   const rentang = rentangBulanWib(c.bulan, c.tahun)
-  const [orders, tren, cpmMap] = await Promise.all([
+  const [orders, tren, cpmMap, tUnit, tAkun] = await Promise.all([
     prisma.orderProduksi.findMany({ where: { ...ORDER_KLIEN, studioId: c.studioId, status: { not: 'BATAL' }, tanggalMasuk: rentang }, select: { ...pilihOrder, assignments: { where: { userId: null, berhentiPada: null }, select: { feeTalent: true, statusBayar: true, talentEksternal: { select: { studioId: true } } } } } }),
     omsetBulanan(c.studioId, c.bulan, c.tahun, c.kurs),
     getCpmMapForStudiosBulan([c.studioId], c.bulan, c.tahun),
+    // Target omset bulan ini (dari Progres Omset web kerja): target unit, atau jumlah target akun bila unit belum diisi.
+    prisma.targetOmsetUnit.findUnique({ where: { studioId_tahun_bulan: { studioId: c.studioId, tahun: c.tahun, bulan: c.bulan } }, select: { targetUsd: true } }),
+    prisma.targetOmsetAkun.findMany({ where: { akunId: { in: c.akun.map(a => a.id) }, tahun: c.tahun, bulan: c.bulan }, select: { targetUsd: true } }),
   ])
+  const targetUsd = r2(tUnit?.targetUsd ?? tAkun.reduce((s, t) => s + t.targetUsd, 0))
   const total = r2(orders.reduce((s, x) => s + uangMasukUsd(x, c.kurs), 0))
   const lalu = tren.length > 1 ? tren[tren.length - 2].usd : 0
   const cpm = cpmMap[c.studioId]?.totalCpm ?? 0
@@ -112,7 +116,7 @@ export const bulanan = wrap(async (req, res) => {
     studio: c.studio, bulan: c.bulan, tahun: c.tahun, kurs: c.kurs,
     totalUsd: total, totalRp: Math.round(total * c.kurs), perubahanPct: lalu > 0 ? Math.round(((total - lalu) / lalu) * 100) : null,
     cpm: Math.round(cpm), cpmSumber: cpmMap[c.studioId]?.sumber ?? 'otomatis', surplusRp: Math.round(total * c.kurs - cpm), cpmTertutupPct: cpm > 0 ? Math.round(((total * c.kurs) / cpm) * 100) : null,
-    tren, akun,
+    tren, akun, targetUsd, targetPct: targetUsd > 0 ? Math.round((total / targetUsd) * 100) : null,
     lempar: { jumlah: fl.length, akun: new Set(fl.map(a => a.akunId)).size, totalRp: fee(fl), lunasRp: fee(lunas), lunasJumlah: lunas.length, belumRp: fee(fl) - fee(lunas), belumJumlah: fl.length - lunas.length,
       dalam: dalam.length, luar: fl.length - dalam.length, lewat30: fl.filter(a => (a.feeTalent ?? 0) > a.nilaiRp * 0.3).length },
   } })
