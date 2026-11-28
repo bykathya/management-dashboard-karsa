@@ -382,7 +382,6 @@ function MemberDrawer({ member, onClose, onNonaktifkan, onRoleUpdated, canManage
                 {[
                   { key: 'nama',             label: 'Nama Lengkap' },
                   { key: 'nomorWa',          label: 'WhatsApp' },
-                  { key: 'telegramUsername', label: 'Username Telegram (tanpa @)' },
                   { key: 'posisi',           label: 'Posisi / Jabatan (3D Artist, Admin, dll)' },
                   { key: 'alamat',           label: 'Alamat Rumah' },
                   { key: 'noRekening',       label: 'No. Rekening' },
@@ -491,12 +490,6 @@ function MemberDrawer({ member, onClose, onNonaktifkan, onRoleUpdated, canManage
                     {member.nomorWa || '—'}
                   </span>
                   {member.nomorWa && <CopyButton text={member.nomorWa} />}
-                </div>
-                <div className="drawer-info-row">
-                  <span className="drawer-info-label">Telegram</span>
-                  <span className="drawer-info-value" style={{ color: member.telegramUsername ? 'var(--text)' : 'var(--text-muted)' }}>
-                    {member.telegramUsername ? `@${member.telegramUsername}` : '—'}
-                  </span>
                 </div>
                 <div className="drawer-info-row">
                   <span className="drawer-info-label">Jenis Kelamin</span>
@@ -1185,7 +1178,6 @@ export default function Members({ openUserId }) {
         'Nama':              m.nama,
         'Email':             m.email ?? '',
         'No WA':             m.nomorWa ?? '',
-        'Telegram':          m.telegramId ?? '',
         'Role':              getRoleLabel(top?.roleType) || '',
         'Circle':            getCircleName(m.roles) ?? '',
         'Studio':            getStudioName(m.roles) ?? '',

@@ -174,7 +174,6 @@ export default function Profile({ onNavigate }) {
     try {
       const r = await api.put('/api/profile', {
         nama,
-        telegramUsername: telegramId || null,
         nomorWa: nomorWa || null,
         tanggalLahir: tanggalLahir || null,
         fotoUrl: fotoUrl || null,
@@ -304,19 +303,7 @@ export default function Profile({ onNavigate }) {
                 value={profile?.email ?? ''} disabled />
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Email tidak bisa diubah</div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Telegram Username (tanpa @)</label>
-              <div className="input-wrap">
-                <span className="input-icon" style={{ fontSize: 14 }}>@</span>
-                <input className="form-input" style={{ paddingLeft: 28 }}
-                  placeholder="username_telegram"
-                  value={telegramId} onChange={e => setTelegram(e.target.value)} />
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                Hanya untuk tampilan (mis. kalender ulang tahun). Untuk menerima notifikasi bot, hubungkan akunmu di bawah.
-              </div>
-            </div>
-            <TautanTelegram tertaut={!!profile?.telegramTertaut} onUbah={(v) => setProfile(p => ({ ...p, telegramTertaut: v }))} />
+            {/* Telegram tidak dipakai di Karsa (28 Nov 2026): isian & tautan bot disembunyikan */}
             <div className="form-group">
               <label className="form-label">Nomor WhatsApp</label>
               <input className="form-input" style={{ paddingLeft: 14 }}
