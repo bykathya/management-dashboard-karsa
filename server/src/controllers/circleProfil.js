@@ -11,14 +11,14 @@ const gagal = (res, kode, pesan) => res.status(kode).json({ success: false, mess
 const wrap = (isi) => async (req, res) => { try { return await isi(req, res) } catch { return gagal(res, 500, 'Terjadi kesalahan, coba lagi') } }
 const PERAN = { KOORDINATOR: 'Koordinator', PENDAMPING: 'Pendamping', KADER: 'Kader', KARYAWAN: 'Talent', MAGANG: 'Magang', ADMIN_FUNGSIONAL: 'Admin', KEPALA_CIRCLE: 'Kepala Circle' }
 const URUT = ['KEPALA_CIRCLE', 'KOORDINATOR', 'PENDAMPING', 'ADMIN_FUNGSIONAL', 'KADER', 'KARYAWAN', 'MAGANG']
-const STATUS = ['JOMBLO', 'TAKEN', 'RAHASIA']
-const ZODIAK = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagitarius', 'Capricorn', 'Aquarius', 'Pisces']
+export const STATUS = ['JOMBLO', 'TAKEN', 'RAHASIA']
+export const ZODIAK = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagitarius', 'Capricorn', 'Aquarius', 'Pisces']
 const tautanSah = (s) => /^https?:\/\/[^\s]+$/i.test(s)
 const teks = (v, n) => { const t = String(v ?? '').trim(); return t ? t.slice(0, n) : null }
 const empatAkhir = (s) => (s ? String(s).replace(/\s/g, '').slice(-4) : null)
 const FUN = { fotoUrl: true, bio: true, keahlian: true, zodiak: true, ulangTahun: true, jamAktif: true, status: true, instagram: true }
 
-function rapikanProfil(body) {
+export function rapikanProfil(body) {
   const out = {}
   const foto = teks(body.fotoUrl, 500); if (foto && !tautanSah(foto)) return { galat: 'Foto harus berupa tautan yang diawali http:// atau https://' }; out.fotoUrl = foto
   out.bio = teks(body.bio, 300)
@@ -35,7 +35,7 @@ function rapikanProfil(body) {
 // GET /api/circle/profil-saya
 export const getProfilSaya = wrap(async (req, res) => {
   const [u, p, sdm, dok, peran] = await Promise.all([
-    prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, email: true, nomorWa: true, posisi: true, tanggalLahir: true, tanggalMasuk: true, namaBank: true, noRekening: true, atasNamaRekening: true } }),
+    prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, email: true, fotoUrl: true, nomorWa: true, posisi: true, tanggalLahir: true, tanggalMasuk: true, namaBank: true, noRekening: true, atasNamaRekening: true } }),
     prisma.profilAnggota.findUnique({ where: { userId: req.user.id } }),
     // HR & Database (28 Nov 2026): data kerja & status dokumen — anggota melihat saja (dokumennya sendiri tidak dikirim)
     prisma.profilSdm.findUnique({ where: { userId: req.user.id }, select: { kontrakMulai: true, kontrakAkhir: true } }),
@@ -46,7 +46,7 @@ export const getProfilSaya = wrap(async (req, res) => {
   return res.json({ success: true, data: {
     tentang: Object.fromEntries(Object.keys(FUN).map(k => [k, p?.[k] ?? ''])),
     ndaUrl: p?.ndaUrl ?? null,
-    resmi: { nama: u.nama, email: u.email, nomorWa: u.nomorWa, posisi: u.posisi, tanggalLahir: u.tanggalLahir, bank: u.namaBank, rekening4: empatAkhir(u.noRekening), atasNama: u.atasNamaRekening },
+    resmi: { nama: u.nama, email: u.email, foto: p?.fotoUrl || u.fotoUrl || null, nomorWa: u.nomorWa, posisi: u.posisi, tanggalLahir: u.tanggalLahir, bank: u.namaBank, rekening4: empatAkhir(u.noRekening), atasNama: u.atasNamaRekening },
     pilihan: { zodiak: ZODIAK, status: STATUS },
     kerja: { studio: [...new Set(peran.map(r => r.studio?.nama).filter(Boolean))], peran: [...new Set(peran.map(r => PERAN[r.roleType]).filter(Boolean))], tanggalMasuk: u.tanggalMasuk, kontrakMulai: sdm?.kontrakMulai ?? null, kontrakAkhir: sdm?.kontrakAkhir ?? null },
     dokumen: Object.fromEntries(['KTP', 'NDA', 'SKCK', 'BANK'].map(j => [j, dok.some(d => d.jenis === j)])),
@@ -72,7 +72,7 @@ export const getTimKartu = wrap(async (req, res) => {
   const { studioId } = req.query
   if (!studioId || !(await studioBolehDilihat(req, studioId))) return gagal(res, 403, 'Bukan studio dalam wewenangmu')
   const pengelola = await kelolaStudio(peranKerja(req), studioId)
-  const peran = await prisma.userRole.findMany({ where: { studioId, roleType: { not: 'DIGNITY' }, user: { statusAktif: true } }, select: { roleType: true, user: { select: { id: true, nama: true, posisi: true } } } })
+  const peran = await prisma.userRole.findMany({ where: { studioId, roleType: { not: 'DIGNITY' }, user: { statusAktif: true } }, select: { roleType: true, user: { select: { id: true, nama: true, posisi: true, fotoUrl: true } } } })
   const orang = new Map()
   for (const r of peran) { const x = orang.get(r.user.id) ?? { ...r.user, peran: [] }; x.peran.push(r.roleType); orang.set(r.user.id, x) }
   const profil = new Map((await prisma.profilAnggota.findMany({ where: { userId: { in: [...orang.keys()] } } })).map(p => [p.userId, p]))
@@ -82,6 +82,7 @@ export const getTimKartu = wrap(async (req, res) => {
     return {
       userId: x.id, nama: x.nama, peran: x.posisi || PERAN[x.peran.sort((a, b) => URUT.indexOf(a) - URUT.indexOf(b))[0]] || 'Anggota', saya: x.id === req.user.id,
       ...Object.fromEntries(Object.keys(FUN).map(k => [k, p?.[k] ?? null])),
+      fotoUrl: p?.fotoUrl || x.fotoUrl || null, // foto profil web pusat bila tautan foto belum diisi (28 Nov 2026)
       ...(bolehNda ? { ndaUrl: p?.ndaUrl ?? null, ndaBisaUbah: pengelola } : {}),
     }
   })

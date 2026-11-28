@@ -15,8 +15,14 @@ const TEMPLAT = [
   { nama: 'Tim Internal & Tunjangan', jenis: 'TIM', item: [] },
   { nama: 'Operasional Studio', item: ['Internet', 'Listrik', 'Sewa tempat'] },
   { nama: 'Langganan & Tools', item: ['Adobe / Clip Studio', 'Google Workspace', 'Biaya transfer & kurs'] },
+  { nama: 'Mentor', mentor: true },
   { nama: 'Tabungan & Dana', item: ['Dana darurat', 'Tabungan Hari Raya'] },
 ]
+// Gaji mentor (permintaan Kepala Circle 28 Nov 2026): diambil dari daftar mentor studio (Penggajian web kerja); kalau belum ada, satu pos kosong.
+async function posMentor(studioId) {
+  const m = await prisma.mentorStudio.findMany({ where: { studioId, aktif: true }, orderBy: { createdAt: 'asc' }, select: { nama: true, honor: true } })
+  return m.length ? m.map(x => ({ nama: `Gaji Mentor · ${x.nama}`.slice(0, 80), rupiah: x.honor ?? 0 })) : [{ nama: 'Gaji Mentor', rupiah: 0 }]
+}
 const teks = (v, n) => String(v ?? '').trim().slice(0, n)
 
 export async function bolehFf(roles = [], studioId) {
@@ -106,6 +112,7 @@ export const mulai = wrap(async (req, res) => {
   for (const [u, t] of TEMPLAT.entries()) {
     const k = await prisma.ffKategori.create({ data: { studioId, ...p, nama: t.nama, jenis: t.jenis ?? 'BIASA', urutan: u } })
     if (t.jenis === 'TIM') await sinkronTim(k, studioId, p)
+    else if (t.mentor) await prisma.ffItem.createMany({ data: (await posMentor(studioId)).map((x, i) => ({ kategoriId: k.id, studioId, ...p, ...x, urutan: i })) })
     else await prisma.ffItem.createMany({ data: t.item.map((nama, i) => ({ kategoriId: k.id, studioId, ...p, nama, urutan: i })) })
   }
   return res.status(201).json({ success: true, message: 'Estimasi dibuat' })
@@ -137,6 +144,18 @@ export const tambahKategori = wrap(async (req, res) => {
   const k = await prisma.ffKategori.create({ data: { studioId, ...p, nama, urutan } })
   await prisma.ffItem.create({ data: { kategoriId: k.id, studioId, ...p, nama: 'Pos baru' } })
   return res.status(201).json({ success: true, data: { id: k.id } })
+})
+// POST /api/ff/mentor { studioId, bulan, tahun }: tambah kategori Mentor (atau pos mentor yang belum ada) ke estimasi bulan ini
+export const tambahMentor = wrap(async (req, res) => {
+  const { studioId } = req.body, p = periode(req.body)
+  if (!p) return gagal(res, 422, 'bulan & tahun wajib')
+  if (!(await izin(req, res, studioId))) return
+  let k = await prisma.ffKategori.findFirst({ where: { studioId, ...p, nama: 'Mentor' }, include: { item: { select: { nama: true } } } })
+  if (!k) k = { ...(await prisma.ffKategori.create({ data: { studioId, ...p, nama: 'Mentor', urutan: await prisma.ffKategori.count({ where: { studioId, ...p } }) } })), item: [] }
+  const ada = new Set(k.item.map(i => i.nama))
+  const baru = (await posMentor(studioId)).filter(x => !ada.has(x.nama))
+  if (baru.length) await prisma.ffItem.createMany({ data: baru.map((x, i) => ({ kategoriId: k.id, studioId, ...p, ...x, urutan: k.item.length + i })) })
+  return res.status(201).json({ success: true, message: baru.length ? `Pos gaji mentor ditambahkan (${baru.length})` : 'Pos gaji mentor sudah ada' })
 })
 // PUT /api/ff/kategori/:id { nama }
 export const ubahKategori = wrap(async (req, res) => {

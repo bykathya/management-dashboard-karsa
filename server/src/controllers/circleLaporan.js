@@ -40,7 +40,9 @@ export const getBeranda = wrap(async (req, res) => {
   const p = await akses(req, res, studioId); if (!p) return
   const lihatSemua = p.manajer || p.marketer
   const hari = hariIniWIB(), sekarang = new Date(), jam = Number(new Date(sekarang.getTime() + 7 * 3600000).toISOString().slice(11, 13))
-  const nama = (await prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true } }))?.nama ?? ''
+  const saya = await prisma.user.findUnique({ where: { id: req.user.id }, select: { nama: true, fotoUrl: true } })
+  const nama = saya?.nama ?? ''
+  const foto = (await prisma.profilAnggota.findUnique({ where: { userId: req.user.id }, select: { fotoUrl: true } }))?.fotoUrl || saya?.fotoUrl || null
   const milik = lihatSemua ? {} : { OR: [{ penugasanTahap: { some: { userId: req.user.id } } }, { assignments: { some: { userId: req.user.id, berhentiPada: null } } }] }
   // Tugasku = definisi yang SAMA dengan menu Tugas saya (`antreanSaya`) — dulu dari PenugasanTahap saja sehingga bisa 0 padahal ada tugas
   const [antreanku, selesaiHariIni, aktif] = await Promise.all([
@@ -107,7 +109,7 @@ export const getBeranda = wrap(async (req, res) => {
     seri = Array.from({ length: 8 }, (_, i) => { const a = new Date(senin0.getTime() + i * 7 * 86400000), z = new Date(a.getTime() + 7 * 86400000), A = a.toISOString().slice(0, 10), Z = z.toISOString().slice(0, 10); const dalam = (d) => { const k = kunciTanggalWIB(d); return k >= A && k < Z } ; return { minggu: A, masuk: masuk.filter(o => dalam(o.tanggalMasuk)).length, selesai: selesai.filter(o => dalam(o.tanggalSelesai)).length } })
   }
   return res.json({ success: true, data: {
-    sapaan: jam < 11 ? 'Selamat pagi' : jam < 15 ? 'Selamat siang' : jam < 18 ? 'Selamat sore' : 'Selamat malam', nama, tanggal: hari, mode: p.mode,
+    sapaan: jam < 11 ? 'Selamat pagi' : jam < 15 ? 'Selamat siang' : jam < 18 ? 'Selamat sore' : 'Selamat malam', nama, foto, tanggal: hari, mode: p.mode,
     perhatian, tugasSaya: { aktif: tugasku.length, telat: tugasTelat, selesaiHariIni },
     delivery: { h1: delivery1, h2: delivery.filter(o => o.sisa === 2).length, h3: delivery.filter(o => o.sisa === 3).length, h4_5: delivery.filter(o => o.sisa >= 4).length, daftar: delivery.slice(0, 8).map(o => ({ orderId: o.id, judul: o.judul, klien: o.klien, sisaHari: o.sisa })) },
     manajer: manajerInfo, marketer: marketerInfo, seri,

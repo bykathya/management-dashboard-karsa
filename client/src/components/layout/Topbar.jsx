@@ -34,6 +34,8 @@ export const PAGE_TITLES = {
 }
 
 // Stiker maskot per nama (sama dengan contoh desain): nama yang sama selalu dapat stiker yang sama.
+// Foto profil (diunggah di Profil saya) bila ada; kalau belum, stiker maskot.
+export const fotoAtauStiker = (nama, foto) => foto || stikerNama(nama)
 export function stikerNama(nama = '') { let h = 0; for (const c of nama) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `/maskot/stiker-${(h % 8) + 1}.webp` }
 
 // Bilah atas sesuai desain yang disepakati (28 Nov 2026): kotak cari kapsul (Ctrl K) + chip pengguna.
@@ -51,7 +53,7 @@ export default function Topbar({ title, user, onProfile, onMenuOpen, onOpenSearc
       </button>
       {user && (
         <button type="button" className="kd-saya" title="Profil saya" onClick={onProfile}>
-          <img src={stikerNama(user.nama)} alt="" />{user.nama}
+          <img src={fotoAtauStiker(user.nama, user.fotoUrl)} alt="" />{user.nama}
         </button>
       )}
     </header>

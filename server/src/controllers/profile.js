@@ -1,6 +1,8 @@
 import prisma from '../prisma.js'
 import bcrypt from 'bcrypt'
 import { computeTotalKompensasi } from '../utils/compensation.js'
+import { terapkanThpFf } from '../utils/thpFf.js'
+import { rapikanProfil, ZODIAK, STATUS } from './circleProfil.js'
 import { buatKode, hashKode, MASA_BERLAKU_MS } from '../utils/telegramKode.js'
 
 
@@ -34,7 +36,11 @@ export const getProfile = async (req, res) => {
     // supaya tahu kapan kodenya dipakai di bot). Hash-nya sendiri tidak pernah dikirim ke klien.
     const { telegramId, telegramKodeHash, telegramKodeKadaluarsa, ...sisa } = user
     const telegramKodeAktif = !!telegramKodeHash && !!telegramKodeKadaluarsa && telegramKodeKadaluarsa > new Date()
-    return res.json({ success: true, data: { ...sisa, telegramTertaut: !!telegramId, telegramKodeAktif, ...computeTotalKompensasi(user.roles, user.studioPemilik) } })
+    const roles = await terapkanThpFf(user.id, user.roles)
+    // "Tentang aku" (kartu Tim web kerja) ikut diisi dari sini supaya semua data profil di satu halaman (28 Nov 2026)
+    const p = await prisma.profilAnggota.findUnique({ where: { userId: user.id } })
+    const tentang = Object.fromEntries(['fotoUrl', 'bio', 'keahlian', 'zodiak', 'ulangTahun', 'jamAktif', 'status', 'instagram'].map(k => [k, p?.[k] ?? '']))
+    return res.json({ success: true, data: { ...sisa, roles, tentang, pilihanTentang: { zodiak: ZODIAK, status: STATUS }, telegramTertaut: !!telegramId, telegramKodeAktif, ...computeTotalKompensasi(roles, user.studioPemilik) } })
   } catch {
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan, coba lagi' })
   }
@@ -77,6 +83,11 @@ export const updateProfile = async (req, res) => {
             jenisKelamin, posisi, alamat, namaBank, noRekening, atasNamaRekening,
             nik, nomorBpjs } = req.body
 
+    if (req.body.tentang && typeof req.body.tentang === 'object') {
+      const { galat, data } = rapikanProfil(req.body.tentang)
+      if (galat) return res.status(422).json({ success: false, message: galat })
+      await prisma.profilAnggota.upsert({ where: { userId: req.user.id }, update: data, create: { userId: req.user.id, ...data } })
+    }
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {

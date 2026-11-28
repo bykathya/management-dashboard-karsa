@@ -127,7 +127,7 @@ export const getMonthlySummary = async (req, res) => {
       // Studio kolaborasi (angkanya dihitung di circle mitra) tidak ikut ringkasan keuangan ekosistem.
       prisma.studio.findMany({
         where: { statusAktif: true, ...STUDIO_DIHITUNG },
-        select: { id: true, tipe: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true } } } } },
+        select: { id: true, tipe: true, nama: true, userRoles: { where: { roleType: 'KOORDINATOR' }, select: { user: { select: { nama: true, fotoUrl: true } } } } },
         orderBy: { nama: 'asc' },
       }),
       prisma.weeklyReport.findMany({
@@ -203,9 +203,10 @@ export const getMonthlySummary = async (req, res) => {
     // Runway = (kas + dana di luar kas) / CPM, dalam bulan. Unit di luar wilayah: angka null (disamarkan).
     const perStudio = studios.map(s => {
       const koordinator = s.userRoles.map(r => r.user?.nama).filter(Boolean).join(', ') || null
-      if (!lingkup.boleh(s.id)) return { studioId: s.id, nama: s.nama, koordinator, kas: null, ekuitas: null, kasEkuitas: null, cpm: null, runway: null }
+      const koordinatorFoto = s.userRoles.find(r => r.user?.fotoUrl)?.user.fotoUrl ?? null
+      if (!lingkup.boleh(s.id)) return { studioId: s.id, nama: s.nama, koordinator, koordinatorFoto, kas: null, ekuitas: null, kasEkuitas: null, cpm: null, runway: null }
       const kas = kasMap[s.id] ?? 0, ekuitas = ekuitasMap[s.id] ?? 0, cpm = cpmMap[s.id]?.totalCpm ?? 0
-      return { studioId: s.id, nama: s.nama, koordinator, kas, ekuitas, kasEkuitas: kas + ekuitas, cpm, runway: cpm > 0 ? (kas + ekuitas) / cpm : 0 }
+      return { studioId: s.id, nama: s.nama, koordinator, koordinatorFoto, kas, ekuitas, kasEkuitas: kas + ekuitas, cpm, runway: cpm > 0 ? (kas + ekuitas) / cpm : 0 }
     })
 
     for (const s of studios) {

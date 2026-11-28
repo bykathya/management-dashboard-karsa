@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { formatUSD, formatRp, formatRpShort, formatTanggal, getBulanLabel } from '../../utils/format'
 import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL } from '../../config/ecosystem'
-import { stikerNama } from '../../components/layout/Topbar'
+import { fotoAtauStiker } from '../../components/layout/Topbar'
 import { onActivate } from '../../utils/a11y'
 import { getRoleOrgUnit, hasMinRole } from '../../utils/roles'
 import { dihitungDiEkosistem } from '../../components/common/BadgeKolaborasi'
@@ -439,7 +439,7 @@ function OverviewKarsa({ onNavigate, user, belumLapor }) {
               <tr key={d.studioId}>
                 <td className="num" data-label="No">{String(i + 1).padStart(2, '0')}</td>
                 <td data-label="Studio"><div className="studio"><span className="lambang" style={{ background: WARNA_LAMBANG[i % 3] }}>{d.nama?.[0]?.toUpperCase()}</span>{d.nama}</div></td>
-                <td data-label="Koordinator">{d.koordinator ? <div className="orang"><img src={stikerNama(d.koordinator.split(',')[0])} alt="" />{d.koordinator}</div> : <span className="kosong">—</span>}</td>
+                <td data-label="Koordinator">{d.koordinator ? <div className="orang"><img src={fotoAtauStiker(d.koordinator.split(',')[0], d.koordinatorFoto)} alt="" />{d.koordinator}</div> : <span className="kosong">—</span>}</td>
                 <td className="r num" data-label="Kas + Ekuitas">{formatRp(d.kasEkuitas)}<span className="usd">{usdDari(d.kasEkuitas, kurs)}</span></td>
                 <td className="r num" data-label="CPM">{formatRp(d.cpm)}<span className="usd">{usdDari(d.cpm, kurs)}</span></td>
                 <td className="r" data-label="Runway"><PilRunwayKd r={d.runway} /></td>
