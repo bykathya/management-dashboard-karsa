@@ -1,5 +1,27 @@
 import { useState, useRef, useEffect } from 'react'
 import { FITUR } from '../../config/ecosystem'
+import { usePasangAplikasi } from '../../utils/pasangAplikasi'
+
+// Install App (Karsa, 28 Nov 2026): tombol muncul bila peramban mendukung pemasangan; di iPhone menampilkan petunjuk Safari.
+function TombolPasang() {
+  const { bisa, ios, pasang } = usePasangAplikasi()
+  const [petunjuk, setPetunjuk] = useState(false)
+  if (!bisa) return null
+  return (
+    <>
+      <button className="btn btn-secondary btn-sm" style={{ whiteSpace: 'nowrap' }} title="Pasang web ini seperti aplikasi" onClick={async () => { if ((await pasang()) === 'ios') setPetunjuk(true) }}>📲 Install App</button>
+      {petunjuk && ios && (
+        <div role="dialog" aria-label="Pasang di iPhone" onClick={() => setPetunjuk(false)} style={{ position: 'fixed', inset: 0, background: 'var(--backdrop)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
+            <h3 style={{ marginTop: 0 }}>Pasang di iPhone / iPad</h3>
+            <ol style={{ lineHeight: 1.7, paddingLeft: 20 }}><li>Buka web ini di <b>Safari</b>.</li><li>Ketuk tombol <b>Bagikan</b> (kotak dengan panah ke atas).</li><li>Pilih <b>Tambah ke Layar Utama</b>, lalu <b>Tambah</b>.</li></ol>
+            <button className="btn btn-primary btn-sm" onClick={() => setPetunjuk(false)}>Mengerti</button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 const PAGE_TITLES = {
   Dashboard:    'Overview',
@@ -72,6 +94,7 @@ export default function Topbar({ title, user, onLogout, onProfile, onMenuOpen, o
       <div className="topbar-title">{PAGE_TITLES[title] ?? title}</div>
 
       <div className="topbar-right">
+        <TombolPasang />
         <button className="icon-btn" title="Cari fitur (Ctrl+K)" onClick={onOpenSearch} style={{ position: 'relative' }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>

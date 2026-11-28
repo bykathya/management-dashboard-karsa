@@ -2,12 +2,14 @@ import { useAuth } from '../../context/AuthContext'
 import { ECOSYSTEM_NAME, TELEGRAM_BOT } from '../../config/ecosystem'
 import { alfa } from '../../utils/warna'
 import { ALAMAT_TUMBUH } from '../Raport/PindahKeTumbuh'
-import LabelJalur from '../../components/common/LabelJalur'
 
-const ADMIN_ROLES  = ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA', 'ADMIN_FUNGSIONAL']
+const KEPALA_ROLES = ['ADVISOR', 'KEPALA_EKOSISTEM', 'KEPALA_CIRCLE', 'KEPALA_RUMAH_USAHA']
+const ADMIN_ROLES  = ['ADMIN_FUNGSIONAL']
 const KOOR_ROLES   = ['KOORDINATOR', 'PENDAMPING']
 
 function getTier(roles = []) {
+  if (roles.some(r => KEPALA_ROLES.includes(r.roleType))) return 'kepala'
+  if (roles.some(r => KOOR_ROLES.includes(r.roleType)))  return 'koordinator'
   if (roles.some(r => ADMIN_ROLES.includes(r.roleType))) return 'admin'
   if (roles.some(r => KOOR_ROLES.includes(r.roleType)))  return 'koordinator'
   return 'dasar'
@@ -118,30 +120,27 @@ function TierDasar({ onNavigate, magang }) {
   )
 }
 
-// "Mana yang dipakai?" (1 Nov 2026) -- selama mode bayangan web circle ada dua jalur angka uang.
-// Kamus istilahnya: openspec.md § KAMUS ISTILAH UANG. Web circle sendiri tidak diubah (keputusan user 1 Nov 2026).
+// "Angka uang: dari mana?" versi Karsa (28 Nov 2026): satu alur dari kerja harian sampai laporan.
 const JALUR_UANG = [
-  ['Pengeluaran', 'resmi', 'Keuangan › Pengeluaran (yang dicatat di web circle › Keuangan › Minggu ini ikut muncul di sana)', 'Biaya', 'web circle › Biaya & Kas'],
-  ['Kas rekening', 'resmi', 'saldo di Unit › Bio Studio › Rekening Bank (atau tombol Update Kas)', 'Kas akhir buku besar', 'web circle › Tutup bulan'],
-  ['Biaya rutin (CPM)', 'resmi', 'Unit › Bio Studio › Biaya rutin bulanan', 'Item tetap', 'web circle › Tutup bulan › Item tetap'],
-  ['Omzet laporan', 'resmi', 'Keuangan › Laporan Omset (diisi tiap Sabtu)', 'Omzet order', 'web circle › Penjualan / Bayangan omzet'],
+  ['Omset', 'Daily Sheet (web kerja) → Keuangan › Laporan Omset, tombol Isi dari Daily Sheet, lalu kirim tiap Sabtu'],
+  ['Kas + Ekuitas', 'Executive › Detail Kas + Ekuitas (saldo rekening + uang di marketplace/PayPal, dengan screenshot)'],
+  ['CPM (biaya bulanan)', 'Executive › Financial Forecasting; kalau bulan itu belum diisi, dihitung otomatis dari gaji & biaya rutin'],
+  ['Pengeluaran', 'Keuangan › Pengeluaran, per item'],
+  ['Bonus, komisi, lembur', 'Daily Sheet › Performa, Bonus & Lembur → masuk slip gaji'],
 ]
 
 function JalurUang() {
   return (
     <section style={{ marginTop: 32 }}>
       <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
-        letterSpacing: '0.08em', marginBottom: 8 }}>Angka uang: mana yang dipakai?</h3>
+        letterSpacing: '0.08em', marginBottom: 8 }}>Angka uang: dari mana?</h3>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>
-        <LabelJalur jenis="resmi" /> masuk laporan {ECOSYSTEM_NAME} — ini yang wajib diisi.{' '}
-        <LabelJalur jenis="bayangan" /> uji coba di web circle, belum masuk laporan. Laporan, Forecasting
-        dan Rekap {ECOSYSTEM_NAME} hanya menghitung angka resmi.
+        Semua angka di Leaderboard, Overview, dan laporan {ECOSYSTEM_NAME} berasal dari tempat-tempat ini.
       </p>
       <div className="list-ringkas" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-        {JALUR_UANG.map(([resmi, , tempat, bayangan, tempatBayangan]) => (
-          <div key={resmi} className="item-ringkas" style={{ padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>
-            <div><b>{resmi}</b> <LabelJalur jenis="resmi" /> <span style={{ color: 'var(--text-secondary)' }}>— {tempat}</span></div>
-            <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>beda dengan <b>{bayangan}</b> <LabelJalur jenis="bayangan" /> — {tempatBayangan}</div>
+        {JALUR_UANG.map(([apa, tempat]) => (
+          <div key={apa} className="item-ringkas" style={{ padding: '10px 12px', fontSize: 13, lineHeight: 1.5 }}>
+            <b>{apa}</b> <span style={{ color: 'var(--text-secondary)' }}>— {tempat}</span>
           </div>
         ))}
       </div>
@@ -149,56 +148,93 @@ function JalurUang() {
   )
 }
 
+// Panduan per peran versi Karsa (28 Nov 2026): kerja harian di web kerja (Daily Sheet), web pusat untuk ringkasan & data.
+function Langkah({ judul, children }) {
+  return (
+    <section style={{ marginTop: 32 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
+          letterSpacing: '0.08em', marginBottom: 16 }}>{judul}</h3>
+      {children}
+    </section>
+  )
+}
+
 function TierKoordinator({ onNavigate, studioNama }) {
+  const s = studioNama ? ` ${studioNama}` : ''
   return (
     <>
       <section>
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
           letterSpacing: '0.08em', marginBottom: 16 }}>Tugas Rutinmu</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <TaskItem freq="Setiap Sabtu ⚡" freqColor="var(--red)"
-            title="Isi Laporan Omset Mingguan"
-            desc={`Deadline Sabtu! Buka Keuangan › Laporan Omset → Input Laporan. Isi omset per platform (Fiverr, Etsy, Upwork, VGen, dll)${studioNama ? ` untuk ${studioNama}` : ''}. Kas terisi otomatis dari saldo Rekening Bank — kamu tidak perlu mengetiknya.`} />
-          <TaskItem freq="Setiap ada belanja" freqColor="var(--amber)"
-            title="Catat pengeluaran per item"
-            desc="Keuangan › Pengeluaran: pilih unit & bulan, buka minggunya, lalu catat tanggal, kategori, nama, jumlah. Total di Laporan Omset minggu itu terisi otomatis. Biaya rutin (THP, langganan, support) sudah masuk CPM, jangan dicatat lagi." />
-          <TaskItem freq="Saat saldo berubah" freqColor="var(--cyan)"
-            title="Perbarui saldo Rekening Bank"
-            desc="Keuangan › Financial Forecasting → buka circle-mu → tombol Update Kas di baris studio. Bisa juga lewat Unit › Bio Studio › Rekening Bank. Kas di laporan & dashboard ikut otomatis." />
-          <TaskItem freq="Setiap bulan" freqColor="var(--accent)"
-            title="Isi Penilaian Kader"
-            desc="SDM › Performa Kader → pilih anggotamu → tab Penilaian Kader. Minimal sebulan sekali. Hasilnya muncul sebagai Kondisi Tim studiomu di Kepatuhan Laporan." />
-          <TaskItem freq="Setiap bulan" freqColor="var(--green)"
-            title="Lapor simpanan Koperasi"
-            desc="Keuangan › Koperasi. Kamu bisa lapor untuk dirimu sendiri dan untuk anggota studiomu yang belum lapor." />
-          <TaskItem freq="Kapan perlu" freqColor="var(--pink)"
-            title="Proses lamaran di Rekrutmen"
-            desc="Angka merah di menu SDM berarti ada calon anggota baru menunggu. Buka SDM › Rekrutmen, geser status ke Seleksi → Diterima/Ditolak." />
+          <TaskItem freq="Setiap hari" freqColor="var(--red)" title="Catat order & chat masuk di Daily Sheet"
+            desc={`Di web kerja harian, menu Daily Sheet: tambah chat masuk (Inbox) dan order baru, lalu ubah statusnya (WIP, Revisi, Waitlist, Done) dan tandai Lunas saat klien sudah bayar. Semua laporan studio${s} terhitung dari sini.`} />
+          <TaskItem freq="Setiap Sabtu ⚡" freqColor="var(--amber)" title="Kirim Laporan Omset mingguan"
+            desc="Keuangan › Laporan Omset → klik Isi dari Daily Sheet, cek angkanya, lalu kirim." />
+          <TaskItem freq="Saat saldo berubah" freqColor="var(--cyan)" title="Perbarui Detail Kas + Ekuitas"
+            desc="Executive › Detail Kas + Ekuitas: isi saldo rekening dan uang di marketplace/PayPal, tempel screenshot saldonya (Ctrl+V). Kepala Circle yang mencentang VALID." />
+          <TaskItem freq="Awal bulan" freqColor="var(--accent)" title="Isi Financial Forecasting"
+            desc="Executive › Financial Forecasting: perkiraan pengeluaran bulan ini (gaji, operasional, langganan). Bisa disalin dari bulan lalu. Tandai Lunas setelah dibayar." />
+          <TaskItem freq="Akhir bulan" freqColor="var(--green)" title="Bonus, komisi & lembur ke slip gaji"
+            desc="Web kerja › Daily Sheet › Performa, Bonus & Lembur: isi target dan dana bonus, setujui lembur, lalu klik Masukkan bonus & komisi ke slip gaji." />
+          <TaskItem freq="Kapan perlu" freqColor="var(--pink)" title="Tulis SOP studio & lengkapi data tim"
+            desc="SOP ditulis di web kerja (menu SOP & Aturan). Kontrak, rekening, dan dokumen anggota diisi di web pusat › HR & Database." />
         </div>
       </section>
-
-      <section style={{ marginTop: 32 }}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
-          letterSpacing: '0.08em', marginBottom: 16 }}>Halaman yang Perlu Kamu Kuasai</h3>
+      <Langkah judul="Halaman yang Perlu Kamu Kuasai">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-          <PageCard emoji="📊" title="Laporan Omset" page="Finance" params={{ tab: 'omset' }} onNavigate={onNavigate} color="var(--red)"
-            desc="Menu Keuangan, tab pertama. Isi setiap Sabtu: omset per platform & pengeluaran per item. Ada riwayat laporan juga." />
-          <PageCard emoji="🧾" title="Pengeluaran" page="Finance" params={{ tab: 'pengeluaran' }} onNavigate={onNavigate} color="var(--amber)"
-            desc="Menu Keuangan. Satu tempat untuk melihat & mencatat pengeluaran unitmu per bulan, dikelompokkan per minggu laporan." />
-          <PageCard emoji="📈" title="Financial Forecasting" page="Forecasting" onNavigate={onNavigate} color="var(--cyan)"
-            desc="Menu Executive (Koordinator ke atas). Kas, CPM, omset & target studiomu dalam satu layar, plus tombol Update Kas." />
-          <PageCard emoji="✍️" title="Performa Kader" page="SDM" params={{ tab: 'kader' }} onNavigate={onNavigate} color="var(--accent-light)"
-            desc="Menu SDM. Isi Penilaian Kader anggotamu dan rekam riwayat perjalanan mereka." />
-          <PageCard emoji="🏦" title="Koperasi" page="Finance" params={{ tab: 'koperasi' }} onNavigate={onNavigate} color="var(--green)"
-            desc="Menu Keuangan. Lapor setoran untukmu dan anggota studiomu, pantau status bayar bulan ini." />
-          <PageCard emoji="🎯" title="Goals & Roadmap" page="Goals" onNavigate={onNavigate} color="var(--amber)"
-            desc="Update progress goals studiomu, tambah goal baru, dan pantau target yang sudah dicapai." />
-          <PageCard emoji="🧑‍💼" title="Rekrutmen" page="SDM" params={{ tab: 'rekrutmen' }} onNavigate={onNavigate} color="var(--pink)"
-            desc="Menu SDM. Proses calon anggota baru dari jalur Live-In, Referral, atau Langsung." />
-          <PageCard emoji="📣" title="Pengumuman" page="Announcement" onNavigate={onNavigate} color="var(--amber)"
-            desc="Baca pengumuman dan cek Checklist Mingguan yang bisa langsung kamu tandai & salin ke WA." />
+          <PageCard emoji="🏆" title="Leaderboard" page="Performance" onNavigate={onNavigate} color="var(--accent)" desc="Studio & akun jualan terbaik bulan ini, omset per platform, bulan tertinggi & terendah." />
+          <PageCard emoji="📊" title="Overview" page="Dashboard" onNavigate={onNavigate} color="var(--cyan)" desc="Kas + Ekuitas, CPM, dan Runway (kas cukup untuk berapa bulan) tiap studio." />
+          <PageCard emoji="🏦" title="Detail Kas + Ekuitas" page="DetailKas" onNavigate={onNavigate} color="var(--green)" desc="Saldo semua rekening & pos uang studio, lengkap dengan screenshot." />
+          <PageCard emoji="📈" title="Financial Forecasting" page="Forecasting" onNavigate={onNavigate} color="var(--amber)" desc="Perkiraan pengeluaran bulanan per kategori; totalnya jadi CPM." />
+          <PageCard emoji="🗓️" title="Weekly & Monthly Report" page="LaporanMingguan" onNavigate={onNavigate} color="var(--pink)" desc="Laporan studio otomatis dari Daily Sheet. Bisa diunduh CSV atau dicetak PDF." />
+          <PageCard emoji="📊" title="Laporan Omset" page="Finance" params={{ tab: 'omset' }} onNavigate={onNavigate} color="var(--red)" desc="Kirim setiap Sabtu. Tombol Isi dari Daily Sheet mengisi angkanya." />
+          <PageCard emoji="🗂️" title="HR & Database" page="HrDatabase" onNavigate={onNavigate} color="var(--accent-light)" desc="Kontrak, rekening, dan 4 dokumen anggota studiomu." />
+          <PageCard emoji="📣" title="Info & Dokumen" page="Announcement" onNavigate={onNavigate} color="var(--amber)" desc="Pengumuman, event (masuk kalender), kontrak, dan tautan Drive untuk tim." />
+          <PageCard emoji="✨" title="Manifest" page="Manifest" onNavigate={onNavigate} color="var(--pink)" desc="Rekap manifestasi bulanan tim; bisa disalin ke WA." />
+        </div>
+      </Langkah>
+    </>
+  )
+}
+
+function TierKepala({ onNavigate }) {
+  return (
+    <>
+      <section>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
+          letterSpacing: '0.08em', marginBottom: 16 }}>Tugas Rutinmu</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <TaskItem freq="Setiap Senin" freqColor="var(--accent)" title="Cek Leaderboard & Overview"
+            desc="Executive › Leaderboard untuk studio & akun terbaik; Overview untuk Kas + Ekuitas dan Runway tiap studio (lime ≥ 6 bulan, kuning 3–6, pink di bawah 3)." />
+          <TaskItem freq="Setiap Sabtu" freqColor="var(--red)" title="Pantau Laporan Omset & Kepatuhan"
+            desc="Pastikan tiap Koordinator sudah mengirim Laporan Omset (Isi dari Daily Sheet → kirim). Lihat siapa yang belum di Kepatuhan Laporan." />
+          <TaskItem freq="Setelah koordinator update" freqColor="var(--green)" title="Centang VALID di Detail Kas + Ekuitas"
+            desc="Cocokkan nominal dengan screenshot saldonya, lalu klik BELUM VALID → VALID. Kalau nominal diubah lagi, otomatis kembali belum valid." />
+          <TaskItem freq="Awal bulan" freqColor="var(--cyan)" title="Tinjau Financial Forecasting & Monthly Report"
+            desc="Pastikan tiap studio mengisi estimasi pengeluaran bulan ini. Monthly Report membandingkan omset dengan CPM dan sisa bersihnya." />
+          <TaskItem freq="Tanggal 1" freqColor="var(--pink)" title="Rekap Manifest bulanan"
+            desc="Menu Manifest: lihat siapa yang sudah menulis, lalu Salin format WA untuk grup." />
+          <TaskItem freq="Kapan perlu" freqColor="var(--amber)" title="Kelola anggota & dokumen"
+            desc="SDM untuk menambah anggota dan perannya; HR & Database untuk kontrak, rekening, dan dokumen (KTP, NDA, SKCK, buku rekening)." />
         </div>
       </section>
+      <Langkah judul="Halaman yang Perlu Kamu Kuasai">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+          <PageCard emoji="🏆" title="Leaderboard" page="Performance" onNavigate={onNavigate} color="var(--accent)" desc="Top studio, top akun jualan, omset per platform, ATH/ATL." />
+          <PageCard emoji="📊" title="Overview" page="Dashboard" onNavigate={onNavigate} color="var(--cyan)" desc="Kas + Ekuitas, CPM, Runway semua studio." />
+          <PageCard emoji="🏦" title="Detail Kas + Ekuitas" page="DetailKas" onNavigate={onNavigate} color="var(--green)" desc="Saldo & screenshot; kamu yang mencentang VALID." />
+          <PageCard emoji="📈" title="Financial Forecasting" page="Forecasting" onNavigate={onNavigate} color="var(--amber)" desc="Estimasi pengeluaran bulanan tiap studio." />
+          <PageCard emoji="🗓️" title="Weekly Report" page="LaporanMingguan" onNavigate={onNavigate} color="var(--pink)" desc="Status order, omset mingguan, Admin PIC & aktivitas 7 hari." />
+          <PageCard emoji="📅" title="Monthly Report" page="LaporanBulanan" onNavigate={onNavigate} color="var(--pink)" desc="Omset vs CPM, pertumbuhan, akun jualan, lempar kerjaan." />
+          <PageCard emoji="🗂️" title="HR & Database" page="HrDatabase" onNavigate={onNavigate} color="var(--accent-light)" desc="Kartu anggota, kontrak, rekening, dokumen privat." />
+          <PageCard emoji="📣" title="Info & Dokumen" page="Announcement" onNavigate={onNavigate} color="var(--amber)" desc="Pengumuman, event, kontrak, tautan Drive; tampil juga di web kerja." />
+          <PageCard emoji="📅" title="Kalender" page="Calendar" onNavigate={onNavigate} color="var(--cyan)" desc="Event, acara web kerja, hari libur, ulang tahun." />
+          <PageCard emoji="✨" title="Manifest" page="Manifest" onNavigate={onNavigate} color="var(--pink)" desc="Rekap manifestasi bulanan semua studio." />
+          <PageCard emoji="📘" title="SOP & Aturan" page="Sop" onNavigate={onNavigate} color="var(--green)" desc="Lihat SOP tiap studio (ditulis Koordinator di web kerja)." />
+          <PageCard emoji="📥" title="Unduh Laporan" page="Reports" onNavigate={onNavigate} color="var(--accent-light)" desc="Executive Summary PDF & laporan lain." />
+        </div>
+      </Langkah>
     </>
   )
 }
@@ -210,55 +246,22 @@ function TierAdmin({ onNavigate }) {
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
           letterSpacing: '0.08em', marginBottom: 16 }}>Tugas Rutinmu</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          <TaskItem freq="Setiap Sabtu" freqColor="var(--accent)"
-            title="Pantau Kepatuhan Laporan"
-            desc="Cek siapa yang sudah dan belum lapor omset, sekaligus Kondisi Tim tiap studio (dari Penilaian Kader). Hubungi yang belum lapor lewat Telegram atau koordinatornya." />
-          <TaskItem freq="Setiap Sabtu" freqColor="var(--cyan)"
-            title="Review keuangan studio"
-            desc="Keuangan › Financial Forecasting: kas, CPM, omset & target semua unit per circle. Detail laporan per minggu ada di tab Laporan Omset & Rekap Bulanan." />
-          <TaskItem freq="Setiap bulan" freqColor="var(--red)"
-            title="Konfirmasi setoran Koperasi"
-            desc="Angka merah di menu Keuangan = ada setoran menunggu. Buka Keuangan › Koperasi, cek bukti transfer, klik Konfirmasi." />
-          <TaskItem freq="Setiap minggu" freqColor="var(--cyan)"
-            title="Update kas Circle / Rumah Usaha"
-            desc="Keuangan › Dana & Pos → Kas Circle & Rumah Usaha. Hasilnya tampil sebagai Pos Rumah di Financial Forecasting." />
-          <TaskItem freq="Setiap bulan" freqColor="var(--green)"
-            title="Input data keuangan bulanan"
-            desc="Keuangan › Dana & Pos: update Dana Ekosistem (Dana PE, Forum, Berkah)." />
-          <TaskItem freq="Awal bulan" freqColor="var(--accent-light)"
-            title="Unduh Monthly Report"
-            desc="Unduh Laporan → Monthly Report: pilih circle-mu (atau satu ekosistem), bulan lalu, tema Terang/Gelap & sampul. Lihat Pratinjau Langsung, lalu unduh PDF-nya." />
-          <TaskItem freq="Kapan perlu" freqColor="var(--amber)"
-            title="Kelola Anggota"
-            desc="SDM › Anggota: onboarding anggota baru (dari Rekrutmen atau langsung), atur role, set studio/circle, nonaktifkan yang sudah keluar." />
-          <TaskItem freq="Kapan perlu" freqColor="var(--pink)"
-            title="Buat Pengumuman"
-            desc="Kirim pengumuman ke ALL / Circle / Studio tertentu. Pengumuman juga bisa dikirim ke Telegram otomatis." />
+          <TaskItem freq="Setiap hari" freqColor="var(--red)" title="Kerja harian di web kerja"
+            desc="Catat chat masuk dan order akun yang kamu pegang di Daily Sheet, ubah statusnya, dan tandai Lunas. Web pusat ini untuk melihat ringkasan." />
+          <TaskItem freq="Setiap minggu" freqColor="var(--cyan)" title="Pantau Leaderboard & Weekly Report"
+            desc="Lihat posisi akunmu di Leaderboard dan aktivitas 7 hari di Weekly Report." />
+          <TaskItem freq="Kapan perlu" freqColor="var(--amber)" title="Baca Info & Kalender"
+            desc="Pengumuman, event, dan dokumen dari Kepala Circle." />
         </div>
       </section>
-
-      <section style={{ marginTop: 32 }}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase',
-          letterSpacing: '0.08em', marginBottom: 16 }}>Halaman yang Perlu Kamu Kuasai</h3>
+      <Langkah judul="Halaman yang Perlu Kamu Kuasai">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-          <PageCard emoji="🏥" title="Kepatuhan Laporan" page="Health" onNavigate={onNavigate} color="var(--accent)"
-            desc="Siapa yang sudah/belum lapor, skor kepatuhan per studio & circle, dan Kondisi Tim dari Penilaian Kader." />
-          <PageCard emoji="💰" title="Keuangan" page="Finance" onNavigate={onNavigate} color="var(--green)"
-            desc="Satu menu untuk uang: Laporan Omset, Pengeluaran, Rekap Bulanan, Koperasi, Dana & Pos." />
-          <PageCard emoji="👥" title="SDM" page="SDM" onNavigate={onNavigate} color="var(--accent-light)"
-            desc="Satu menu untuk orang: Anggota, Performa Kader, Rekrutmen, Payroll." />
-          <PageCard emoji="📈" title="Performa" page="Performance" onNavigate={onNavigate} color="var(--cyan)"
-            desc="Ranking omset studio per bulan. Lihat tren dan perbandingan performa antar studio." />
-          <PageCard emoji="🗄️" title="Unit" page="MasterData" onNavigate={onNavigate} color="var(--cyan)"
-            desc="Kelola circle, rumah usaha, studio, rekening bank studio, upload SKB, dan lihat struktur tim lengkap." />
-          <PageCard emoji="📥" title="Unduh Laporan" page="Reports" onNavigate={onNavigate} color="var(--accent-light)"
-            desc="Monthly Report slide 16:9 per circle/ekosistem dengan pratinjau langsung, plus laporan status mingguan & CSV." />
-          <PageCard emoji="🎯" title="Goals & Roadmap" page="Goals" onNavigate={onNavigate} color="var(--amber)"
-            desc="Buat dan pantau goals ekosistem, circle, dan studio. Update progress dan set deadline." />
-          <PageCard emoji="📣" title="Pengumuman" page="Announcement" onNavigate={onNavigate} color="var(--pink)"
-            desc="Buat pengumuman ke seluruh ekosistem atau target spesifik. Kirim juga ke Telegram otomatis." />
+          <PageCard emoji="🏆" title="Leaderboard" page="Performance" onNavigate={onNavigate} color="var(--accent)" desc="Studio & akun jualan terbaik bulan ini." />
+          <PageCard emoji="📊" title="Overview" page="Dashboard" onNavigate={onNavigate} color="var(--cyan)" desc="Ringkasan keuangan ekosistem." />
+          <PageCard emoji="📣" title="Info & Dokumen" page="Announcement" onNavigate={onNavigate} color="var(--amber)" desc="Pengumuman, event, kontrak, tautan Drive." />
+          <PageCard emoji="📅" title="Kalender" page="Calendar" onNavigate={onNavigate} color="var(--pink)" desc="Event, hari libur, ulang tahun." />
         </div>
-      </section>
+      </Langkah>
     </>
   )
 }
@@ -274,7 +277,8 @@ export default function Panduan({ onNavigate }) {
   const circleNama  = primaryRole?.circle?.nama ?? null
 
   const tierMeta = {
-    admin:       { label: 'Admin / Kepala', color: 'var(--accent)',  bg: 'color-mix(in srgb, var(--accent) 12%, transparent)',  emoji: '🏛️' },
+    kepala:      { label: 'Kepala',         color: 'var(--accent)',  bg: 'color-mix(in srgb, var(--accent) 12%, transparent)',  emoji: '🏛️' },
+    admin:       { label: 'Admin',          color: 'var(--accent)',  bg: 'color-mix(in srgb, var(--accent) 12%, transparent)',  emoji: '🏛️' },
     koordinator: { label: 'Koordinator',    color: 'var(--cyan)',  bg: 'color-mix(in srgb, var(--cyan) 12%, transparent)',   emoji: '🎯' },
     dasar:       { label: 'Anggota',        color: 'var(--green)',  bg: 'color-mix(in srgb, var(--green) 12%, transparent)',  emoji: '👤' },
   }[tier]
@@ -317,8 +321,9 @@ export default function Panduan({ onNavigate }) {
             )}
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.6 }}>
-            {tier === 'admin'       && 'Panduan di bawah disesuaikan untuk peranmu sebagai pengelola ekosistem. Kamu punya akses penuh ke semua fitur.'}
-            {tier === 'koordinator' && 'Panduan di bawah disesuaikan untuk peranmu sebagai koordinator/pendamping. Fokus utamamu adalah laporan omset mingguan dan perkembangan tim.'}
+            {tier === 'kepala'      && 'Kerja harian tim dicatat di web kerja harian (Daily Sheet). Web pusat ini merangkum semuanya: Leaderboard, Overview, kas, laporan, dan data tim.'}
+            {tier === 'admin'       && 'Kerja harianmu ada di web kerja harian (Daily Sheet). Di web pusat ini kamu bisa melihat ringkasan dan info.'}
+            {tier === 'koordinator' && 'Kamu CEO studiomu: catat kerja harian di Daily Sheet (web kerja), kirim Laporan Omset tiap Sabtu, perbarui kas, dan isi Financial Forecasting tiap bulan.'}
             {tier === 'dasar'       && `Panduan di bawah disesuaikan untukmu. Fokus utama: Koperasi dan Profil. Task Kanban studiomu bisa dicek lewat Telegram Bot (@${TELEGRAM_BOT}).`}
           </p>
         </div>
@@ -326,9 +331,10 @@ export default function Panduan({ onNavigate }) {
       </div>
 
       {/* Tier content */}
+      {tier === 'kepala'      && <TierKepala      onNavigate={onNavigate} />}
       {tier === 'admin'       && <TierAdmin       onNavigate={onNavigate} />}
       {tier === 'koordinator' && <TierKoordinator onNavigate={onNavigate} studioNama={studioNama} />}
-      {tier !== 'dasar'       && <JalurUang />}
+      {(tier === 'kepala' || tier === 'koordinator') && <JalurUang />}
       {tier === 'dasar'       && <TierDasar       onNavigate={onNavigate} magang={roles.some(r => r.roleType === 'MAGANG')} />}
 
       {/* Footer note */}
