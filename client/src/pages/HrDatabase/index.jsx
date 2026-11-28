@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../services/api'
+import { stikerNama } from '../../components/layout/Topbar'
 
 // HR & DATABASE (Karsa, 28 Nov 2026): kartu anggota per studio — kontak, kontrak, rekening, dan 4 dokumen.
 // Hanya Kepala Circle dan Koordinator studionya. Dokumen disimpan privat; dibuka lewat API yang memeriksa wewenang.
@@ -29,7 +30,7 @@ function Kartu({ o, onBuka }) {
       <div className="hr-foto">
         <span className="hr-tag" style={{ background: bg, color: fg }}>{o.peran}</span>
         <span className="hr-tag kanan" style={{ background: n === 4 ? 'var(--accent)' : 'var(--bg-card)', color: n === 4 ? 'var(--on-accent)' : 'var(--text)' }}>DOC {n}/4</span>
-        {o.fotoUrl ? <img src={o.fotoUrl} alt="" referrerPolicy="no-referrer" /> : <span className="hr-inisial">{inisial(o.nama)}</span>}
+        <span className="hr-bulat" style={{ background: bg === 'var(--accent)' || o.manajemen ? 'var(--accent)' : bg }}><img src={o.fotoUrl || stikerNama(o.nama)} alt="" referrerPolicy="no-referrer" /></span>
       </div>
       <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
         <b style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.nama}</b>
@@ -140,34 +141,37 @@ export default function HrDatabase({ onNavigate }) {
     const g = [['manajemen', 'Manajemen', d.orang.filter(o => o.manajemen)], ...d.studios.map(s => [s.id, s.nama, d.orang.filter(o => !o.manajemen && o.studioIds.includes(s.id))])]
     return g.filter(([id]) => unit === 'SEMUA' || id === unit).map(([id, nama, isi]) => [id, nama, isi.filter(lolos)]).filter(([, , isi]) => isi.length)
   }, [d, unit, lolos])
-  if (!d) return <div className="card" style={{ padding: 24, color: 'var(--text-muted)' }}>{galat || 'Memuat…'}</div>
+  if (!d) return <div className="kd"><div className="kartu" style={{ padding: 24, color: 'var(--text-muted)' }}>{galat || 'Memuat…'}</div></div>
   const semua = d.orang, hitung = (f) => semua.filter(f).length
   const orangBuka = semua.find(o => o.id === buka)
+  const warnaUnit = (id) => (id === 'manajemen' ? '#111' : ['var(--accent)', 'var(--pink-candy)', 'var(--kd-kuning)'][Math.max(0, d.studios.findIndex(s => s.id === id)) % 3])
   return (
-    <>
-      <div className="page-header" style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-          <h1 style={{ margin: 0 }}>HR & Database</h1><span className="ff-chip">{semua.length} anggota</span><span className="ff-chip" style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>{hitung(o => nDok(o) === 4)} dokumen lengkap</span>
-          {onNavigate && <button type="button" className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto' }} onClick={() => onNavigate('SDM')}>+ Tambah anggota (menu SDM)</button>}
-        </div>
-        <p>Data anggota per studio: kontak, kontrak, rekening, dan dokumen (KTP, NDA, SKCK, buku rekening). Hanya Kepala Circle dan Koordinator studionya yang bisa membuka. Klik kartu untuk mengisi.</p>
+    <div className="kd">
+      <div className="kepala">
+        <h1>HR &amp; Database</h1><span className="chip">{semua.length} anggota</span><span className="chip" style={{ background: 'var(--accent)', color: '#111' }}>{hitung(o => nDok(o) === 4)} dokumen lengkap</span>
       </div>
+      <p className="sub">Data anggota per studio: kontak, kontrak, rekening, dan dokumen (KTP, NDA, SKCK, buku rekening). Hanya Kepala Circle dan koordinator studionya yang bisa membuka. Klik kartu untuk mengisi.</p>
       {galat && <div className="login-error" style={{ marginBottom: 12 }}>{galat}</div>}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 16 }}>
-        <select className="form-input" style={{ width: 170, paddingLeft: 10 }} value={unit} onChange={e => setUnit(e.target.value)} aria-label="Unit"><option value="SEMUA">Semua unit</option><option value="manajemen">Manajemen</option>{d.studios.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}</select>
+      <div className="chips" style={{ alignItems: 'center' }}>
+        <select className="jenis-pil" value={unit} onChange={e => setUnit(e.target.value)} aria-label="Unit"><option value="SEMUA">Semua</option><option value="manajemen">Manajemen</option>{d.studios.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}</select>
         {[['semua', `Semua (${semua.length})`], ['lengkap', `Dokumen 4/4 (${hitung(o => nDok(o) === 4)})`], ['belum', `Belum lengkap (${hitung(o => nDok(o) < 4)})`], ['kontrak', `Kontrak ≤ 30 hari (${hitung(o => { const s = sisaHari(o); return s != null && s <= 30 })})`]].map(([k, l]) => (
-          <button key={k} type="button" className={`btn btn-sm ${saring === k ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSaring(k)}>{l}</button>
+          <button key={k} type="button" className={saring === k ? 'on' : ''} onClick={() => setSaring(k)}>{l}</button>
         ))}
-        <input className="form-input" style={{ flex: '1 1 220px', paddingLeft: 12, marginLeft: 'auto', maxWidth: 320 }} placeholder="Cari nama, email, peran…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari anggota" />
+        <input className="kd-cari-isi" style={{ marginLeft: 'auto', flex: '0 1 300px' }} placeholder="Cari nama, email, peran, studio…" value={q} onChange={e => setQ(e.target.value)} aria-label="Cari anggota" />
       </div>
-      {grup.length === 0 && <div className="card" style={arti}>Tidak ada anggota yang cocok.</div>}
+      {grup.length === 0 && <div className="kartu" style={{ padding: 24 }}>Tidak ada anggota yang cocok.</div>}
       {grup.map(([id, nama, isi]) => (
-        <section key={id} style={{ marginBottom: 22 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}><span className="hr-lambang">{id === 'manajemen' ? 'HQ' : nama[0]}</span><h2 style={{ margin: 0, fontSize: 18, flex: 1 }}>{nama}</h2><span className="ff-chip">{isi.length} anggota</span></div>
+        <section key={id} className="kartu" style={{ padding: 20 }}>
+          <div className="baris" style={{ marginBottom: 16 }}>
+            <span className="lambang" style={{ background: warnaUnit(id), color: id === 'manajemen' ? 'var(--accent)' : '#111' }}>{id === 'manajemen' ? 'HQ' : nama[0]}</span>
+            <h2 style={{ margin: 0, fontSize: 19, flex: 1 }}>{nama}</h2>
+            <span className="chip">{isi.length} anggota</span>
+            {id !== 'manajemen' && onNavigate && <button type="button" className="tombol k" onClick={() => onNavigate('SDM')}>+ Anggota</button>}
+          </div>
           <div className="hr-grid">{isi.map(o => <Kartu key={o.id} o={o} onBuka={setBuka} />)}</div>
         </section>
       ))}
       {orangBuka && <Detail o={orangBuka} studios={d.studios} onTutup={() => setBuka(null)} onUbah={muat} />}
-    </>
+    </div>
   )
 }

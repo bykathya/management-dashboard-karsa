@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL, FITUR, WEB_KERJA } from '../../config/ecosystem'
 import { usePasangAplikasi } from '../../utils/pasangAplikasi'
@@ -389,6 +389,8 @@ export default function Sidebar({ active, onNavigate, user, badges = {}, isOpen,
   const dipakai = new Set(MENU_KD.flatMap(([, ids]) => ids))
   const lainnya = [...boleh.values()].filter(it => !dipakai.has(it.id))
   const nyala = INDUK[active] ?? active
+  // Menu yang aktif selalu terlihat walau daftar menu panjang (mis. SOP, HR di layar pendek).
+  useEffect(() => { document.querySelector('.sidebar .kd-mn.on')?.scrollIntoView({ block: 'nearest' }) }, [nyala])
   const Tombol = ({ item }) => (
     <button type="button" className={`kd-mn${nyala === item.id ? ' on' : ''}`} aria-current={nyala === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
       <span style={{ flex: 1 }}>{LABEL_KD[item.id] ?? item.label}</span>

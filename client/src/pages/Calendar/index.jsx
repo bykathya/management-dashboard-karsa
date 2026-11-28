@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { ECOSYSTEM_NAME } from '../../config/ecosystem'
+import { ECOSYSTEM_NAME_FULL } from '../../config/ecosystem'
 
 const MONTHS  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 const DAYS    = ['Sen','Sel','Rab','Kam','Jum','Sab','Min']
@@ -122,179 +122,68 @@ export default function Calendar({ onNavigate }) {
     return c
   }, [events])
 
+  // Desain Karsa (28 Nov 2026): warna titik per jenis acara, sama dengan contoh desain.
+  const warnaEv = (t) => ({ EVENT: 'var(--pink-candy)', ULANG_TAHUN: 'var(--accent)', DEADLINE_PRODUKSI: 'var(--kd-kuning)', DEADLINE_GOAL: 'var(--kd-kuning)', LIBUR: '#111111' }[t] ?? '#ffffff')
+  const pilihHari = selected ?? (isThisMonth ? today : null)
+  const kunciPilih = pilihHari ? `${tahun}-${bulan}-${pilihHari}` : null
+  const acaraHari = kunciPilih ? (byDate[kunciPilih] ?? []) : []
+  const acaraBulan = [...filtered].sort((x, y) => new Date(x.tanggal) - new Date(y.tanggal))
+  const tglPanjang = (d) => new Date(tahun, bulan - 1, d).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const KartuEv = ({ ev }) => (
+    <div className="ev"><span className="pita-ev" style={{ background: warnaEv(ev.tipe) }} />
+      <div><small>{TIPE_CONFIG[ev.tipe]?.label ?? ev.tipe}</small><b>{ev.judul}</b>{ev.detail && <small>{ev.detail}</small>}
+        {ev.tautan && <small><a href={ev.tautan} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', fontWeight: 600 }}>Buka tautan →</a></small>}</div></div>
+  )
   return (
-    <>
-      {/* Header */}
-      <div style={{
-        display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between',
-        gap: isMobile ? 12 : 0, marginBottom: 20,
-      }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Kalender Ekosistem</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-            Deadline, event, hari libur, dan ulang tahun {ECOSYSTEM_NAME}. Event dari Info & Dokumen dan acara web kerja harian otomatis masuk ke sini.
-          </p>
-          {onNavigate && <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 8 }} onClick={() => onNavigate('Announcement', { buat: 'EVENT' })}>+ Tambah event</button>}
+    <div className="kd">
+      <div className="kepala"><h1>Kalender</h1><span className="chip">{ECOSYSTEM_NAME_FULL}</span></div>
+      <p className="sub">Semua acara circle di satu kalender: event, ulang tahun anggota, deadline order, hari libur, dan pengingat. Event yang dibuat di sini atau di Info &amp; Dokumen (tab Event) muncul juga di web kerja harian.</p>
+      {(events ?? []).length > 0 && (
+        <div className="chips">
+          <button type="button" className={filterTipe === 'all' ? 'on' : ''} onClick={() => setFilterTipe('all')}>Semua ({(events ?? []).length})</button>
+          {Object.entries(TIPE_CONFIG).map(([key, cfg]) => tipeCount[key] ? <button key={key} type="button" className={filterTipe === key ? 'on' : ''} onClick={() => setFilterTipe(filterTipe === key ? 'all' : key)}>{cfg.label} ({tipeCount[key]})</button> : null)}
         </div>
-
-        {/* Nav bulan */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          justifyContent: isMobile ? 'space-between' : 'flex-start',
-        }}>
-          <button onClick={prev} className="btn btn-ghost" aria-label="Bulan sebelumnya" style={{ padding: '8px 12px' }}>←</button>
-          <div style={{ textAlign: 'center', minWidth: isMobile ? 0 : 160, flex: isMobile ? 1 : 'none' }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{MONTHS[bulan-1]}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{tahun}</div>
+      )}
+      <div className="kal-wrap">
+        <div className="kartu kal">
+          <div className="kal-head">
+            <button type="button" className="tombol k" onClick={prev} aria-label="Bulan sebelumnya">‹</button>
+            <h2>{MONTHS[bulan - 1]} {tahun}</h2>
+            <button type="button" className="tombol k" onClick={next} aria-label="Bulan berikutnya">›</button>
+            {!isThisMonth && <button type="button" className="tombol k" onClick={() => { setBulan(now.getMonth() + 1); setTahun(now.getFullYear()); setSelected(null) }}>Hari ini</button>}
+            {onNavigate && <button type="button" className="tombol k hitam" style={{ marginLeft: 'auto' }} onClick={() => onNavigate('Announcement', { buat: 'EVENT' })}>+ Tambah event</button>}
           </div>
-          <button onClick={next} className="btn btn-ghost" aria-label="Bulan berikutnya" style={{ padding: '8px 12px' }}>→</button>
-          {!isMobile && (
-            <button onClick={() => { setBulan(now.getMonth()+1); setTahun(now.getFullYear()); setSelected(null) }}
-              className="btn btn-ghost" style={{ fontSize: 12, padding: '8px 12px' }}>
-              Hari Ini
-            </button>
-          )}
-        </div>
-        {isMobile && (
-          <button onClick={() => { setBulan(now.getMonth()+1); setTahun(now.getFullYear()); setSelected(null) }}
-            className="btn btn-ghost" style={{ fontSize: 12, padding: '8px 12px' }}>
-            Hari Ini
-          </button>
-        )}
-      </div>
-
-      {/* Summary chips */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        <button onClick={() => setFilterTipe('all')}
-          style={{ padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: filterTipe === 'all' ? 'var(--accent-subtle)' : 'var(--bg-surface)',
-            color: filterTipe === 'all' ? 'var(--accent-light)' : 'var(--text-secondary)' }}>
-          Semua ({(events ?? []).length})
-        </button>
-        {Object.entries(TIPE_CONFIG).map(([key, cfg]) => {
-          const count = tipeCount[key] ?? 0
-          if (!count) return null
-          return (
-            <button key={key} onClick={() => setFilterTipe(filterTipe === key ? 'all' : key)}
-              style={{ padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                background: filterTipe === key ? cfg.bg : 'var(--bg-surface)',
-                color: filterTipe === key ? cfg.color : 'var(--text-secondary)' }}>
-              {cfg.icon} {cfg.label} ({count})
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="two-col-layout-auto">
-        {/* Grid Kalender */}
-        <div>
-          {/* Day headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, marginBottom: 4 }}>
-            {DAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700,
-                color: 'var(--text-muted)', textTransform: 'uppercase', padding: '6px 0' }}>
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar cells */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
-            {/* Empty cells */}
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`e-${i}`} style={{ minHeight: 80 }} />
-            ))}
-
-            {/* Day cells */}
+          <div className="kal-grid">
+            {DAYS.map(d => <div key={d} className="nm">{d}</div>)}
+            {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} className="kk kosong" />)}
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-              const key   = `${tahun}-${bulan}-${day}`
-              const evts  = byDate[key] ?? []
-              const isToday = isThisMonth && day === today
-              const isSel   = selected === day
-
+              const evts = byDate[`${tahun}-${bulan}-${day}`] ?? []
               return (
-                <div key={day}
-                  onClick={() => setSelected(isSel ? null : day)}
-                  style={{
-                    minHeight: 80, borderRadius: 10, padding: 8, cursor: 'pointer',
-                    border: `1px solid ${isSel ? 'var(--accent)' : isToday ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--border)'}`,
-                    background: isSel ? 'var(--accent-subtle)' : isToday ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'var(--bg-card)',
-                    transition: 'border-color .15s, background .15s',
-                  }}
-                  onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
-                  onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = isToday ? 'color-mix(in srgb, var(--accent) 5%, transparent)' : 'var(--bg-card)' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{
-                      fontSize: 13, fontWeight: isToday ? 800 : 500,
-                      color: isToday ? 'var(--accent-light)' : 'var(--text)',
-                      width: 22, height: 22, borderRadius: '50%', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      background: isToday ? 'var(--accent-subtle)' : 'transparent',
-                    }}>{day}</span>
-                    {evts.length > 0 && (
-                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>
-                        {evts.length}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Event dots */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {evts.slice(0, 3).map(ev => (
-                      <div key={ev.id} style={{
-                        fontSize: 10, padding: '2px 5px', borderRadius: 4,
-                        background: TIPE_CONFIG[ev.tipe]?.bg ?? 'color-mix(in srgb, var(--text-muted) 15%, transparent)',
-                        color: TIPE_CONFIG[ev.tipe]?.color ?? 'var(--text-muted)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        fontWeight: 600,
-                      }}>
-                        {TIPE_CONFIG[ev.tipe]?.icon} {ev.judul}
-                      </div>
-                    ))}
-                    {evts.length > 3 && (
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 4 }}>
-                        +{evts.length - 3} lagi
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <button key={day} type="button" className={`kk${pilihHari === day ? ' pilih' : ''}${isThisMonth && day === today ? ' hariini' : ''}`} onClick={() => setSelected(day)} aria-label={`${day} ${MONTHS[bulan - 1]}${evts.length ? `, ${evts.length} acara` : ''}`}>
+                  <span className="tg">{day}</span>
+                  <span className="titik-ev">{evts.slice(0, 3).map(ev => <i key={ev.id} style={{ background: warnaEv(ev.tipe) }} />)}</span>
+                  {evts[0] && <span className="lbl-ev">{evts[0].judul}</span>}
+                </button>
               )
             })}
           </div>
+          <div className="legenda-ev">{[['Event', 'var(--pink-candy)'], ['Ulang tahun', 'var(--accent)'], ['Deadline order', 'var(--kd-kuning)'], ['Hari libur', '#111111'], ['Pengingat', '#ffffff']].map(([n, w]) => <span key={n}><i style={{ background: w }} />{n}</span>)}</div>
         </div>
-
-        {/* Panel detail hari (desktop — nempel di samping grid) */}
-        {selected && !isMobile && (
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
-            <DayDetailHeader selected={selected} bulan={bulan} tahun={tahun} count={selectedEvts.length} onClose={() => setSelected(null)} />
-            <DayDetailList evts={selectedEvts} />
+        <div className="kal-sisi">
+          <div className="kartu" style={{ padding: 18, margin: 0 }}>
+            <h3 style={{ margin: '0 0 10px' }}>{pilihHari ? tglPanjang(pilihHari) : 'Pilih tanggal'}</h3>
+            {acaraHari.length ? acaraHari.map(ev => <KartuEv key={ev.id} ev={ev} />) : <p className="kosong" style={{ margin: 0 }}>{pilihHari ? 'Tidak ada acara di tanggal ini.' : 'Klik tanggal di kalender untuk melihat acaranya.'}</p>}
           </div>
-        )}
+          <div className="kartu" style={{ padding: 18, margin: 0 }}>
+            <h3 style={{ margin: '0 0 10px' }}>Semua acara {MONTHS[bulan - 1]}</h3>
+            {acaraBulan.length ? acaraBulan.map(ev => (
+              <button key={ev.id} type="button" className="baris-ev" onClick={() => setSelected(new Date(ev.tanggal).getDate())}>
+                <b>{new Date(ev.tanggal).getDate()}</b><span>{ev.judul}</span><i style={{ background: warnaEv(ev.tipe) }} />
+              </button>
+            )) : <p className="kosong" style={{ margin: 0 }}>{loading ? 'Memuat…' : 'Belum ada acara bulan ini.'}</p>}
+          </div>
+        </div>
       </div>
-
-      {/* Popup detail hari (mobile — muncul langsung kayak Google Calendar, gak perlu scroll) */}
-      {selected && isMobile && (
-        <div className="modal-overlay" onClick={() => setSelected(null)}>
-          <div className="modal-box" style={{ padding: 0, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
-            onClick={e => e.stopPropagation()}>
-            <DayDetailHeader selected={selected} bulan={bulan} tahun={tahun} count={selectedEvts.length} onClose={() => setSelected(null)} />
-            <DayDetailList evts={selectedEvts} />
-          </div>
-        </div>
-      )}
-
-      {/* Loading overlay */}
-      {loading && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, background: 'var(--bg-card)',
-          border: '1px solid var(--border)', borderRadius: 12, padding: '10px 16px',
-          display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-muted)',
-          boxShadow: 'var(--shadow-sm)' }}>
-          <div className="spinner" style={{ width: 16, height: 16 }} />
-          Memuat kalender…
-        </div>
-      )}
-    </>
+    </div>
   )
 }

@@ -3,7 +3,7 @@ import { useApi } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { formatTanggal } from '../../utils/format'
-import { ECOSYSTEM_NAME, APP_URL } from '../../config/ecosystem'
+import { ECOSYSTEM_NAME, ECOSYSTEM_NAME_FULL, APP_URL } from '../../config/ecosystem'
 import { alfa } from '../../utils/warna'
 
 const CHECKLIST_KOORDINATOR = [
@@ -353,30 +353,18 @@ export default function Announcement({ onNavigate, buat }) {
   }
 
   return (
-    <>
-      <div className="page-header" style={{ marginBottom: 20 }}>
-        <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1>Info & Dokumen</h1>
-            <p>Pusat pengumuman resmi, jadwal event, kontrak, tautan Google Drive, dan dokumen kerja {ECOSYSTEM_NAME}. Postingan tampil juga di web kerja harian (menu Info & Kalender) untuk anggota yang dituju; postingan berjenis Event masuk ke Kalender.</p>
-          </div>
-          {canPost && (
-            <button className="btn btn-primary" onClick={() => { setShowForm(v => !v); setMsg(null) }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              {showForm ? 'Tutup' : 'Buat Postingan'}
-            </button>
-          )}
-        </div>
+    <div className="kd">
+      <div className="kepala">
+        <h1>Info &amp; Dokumen</h1>
+        <span className="chip">{data?.length ?? 0} Postingan</span>
+        {canPost && <button type="button" className="tombol hitam ml" onClick={() => { setShowForm(v => !v); setMsg(null) }}>{showForm ? 'Tutup' : '+ Buat Postingan'}</button>}
       </div>
+      <p className="sub">Pusat pengumuman resmi, jadwal event, kontrak, tautan Google Drive, dan dokumen kerja {ECOSYSTEM_NAME_FULL}. Pengumuman dan event tampil juga di web kerja harian (menu Info &amp; Kalender) untuk anggota yang dituju; postingan berjenis Event masuk ke Kalender.</p>
 
       {/* Form */}
       {showForm && (
-        <div className="card" style={{ marginBottom: 24 }}>
-          <div className="card-header">
-            <span className="card-title">Buat postingan baru</span>
-          </div>
+        <div className="kartu" style={{ padding: 22 }}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 19 }}>Buat postingan baru</h2>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div className="form-group">
               <label className="form-label">Target Audience</label>
@@ -532,8 +520,6 @@ export default function Announcement({ onNavigate, buat }) {
         </div>
       )}
 
-      {isKoordinator && onNavigate && <ChecklistMingguan onNavigate={onNavigate} />}
-      {isKoordinator && onNavigate && <PanduanMemulai onNavigate={onNavigate} />}
 
       {error && <div className="login-error" style={{ marginBottom: 16 }}>{error}</div>}
 
@@ -544,73 +530,40 @@ export default function Announcement({ onNavigate, buat }) {
           Memuat pengumuman...
         </div>
       ) : (<>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+        <div className="kartu tab-info" style={{ padding: 16, marginBottom: 0 }}>
           {Object.entries(JENIS_INFO).map(([k, v]) => (
-            <button key={k} type="button" className={`btn btn-sm ${tab === k ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab(k)}>{v}{k === 'SEMUA' ? ` (${data?.length ?? 0})` : ''}</button>
+            <button key={k} type="button" className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{v}{k === 'SEMUA' ? ` (${data?.length ?? 0})` : ''}</button>
           ))}
-          <input className="form-input" style={{ paddingLeft: 12, flex: '1 1 220px', minWidth: 0 }} placeholder="Cari pengumuman, kontrak, tautan Drive…" value={cari} onChange={e => setCari(e.target.value)} aria-label="Cari postingan" />
+          <input placeholder="Cari pengumuman, kontrak, tautan Drive…" value={cari} onChange={e => setCari(e.target.value)} aria-label="Cari postingan" />
         </div>
         {tampil.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '56px 0', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>Belum ada info atau dokumen{data?.length ? ' yang cocok' : ''}</div>
-          <div style={{ fontSize: 13, marginTop: 6 }}>Klik "Buat Postingan" untuk membagikan pengumuman, jadwal event, kontrak, atau tautan Drive.</div>
+        <div className="kartu" style={{ marginTop: 12, padding: 36, textAlign: 'center' }}>
+          <b style={{ fontFamily: 'var(--font-judul)', fontWeight: 600 }}>Belum ada info atau dokumen{data?.length ? ' yang cocok' : ''}.</b>
+          <p style={{ color: 'var(--text-secondary)', margin: '6px 0 0' }}>Klik "+ Buat Postingan" untuk membagikan pengumuman, jadwal event, kontrak, atau tautan Drive.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
           {tampil.map(a => (
-            <div key={a.id} className="card" style={{ padding: 20 }}>
-              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                  background: avatarColor(a.namaPembuat),
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 700, color: '#fff',
-                }}>
-                  {initials(a.namaPembuat)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 4 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{a.judul}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                      <span className={`badge ${
-                        a.targetTipe === 'ALL' ? 'success' :
-                        a.targetTipe === 'CIRCLE' ? 'info' :
-                        a.targetTipe === 'RUMAH_USAHA' ? 'info' :
-                        a.targetTipe === 'ROLE' ? 'warning' : 'purple'
-                      }`}>
-                        {a.targetTipe === 'ALL'          ? 'Semua' :
-                         a.targetTipe === 'CIRCLE'       ? 'Circle' :
-                         a.targetTipe === 'RUMAH_USAHA'  ? 'Rumah Usaha' :
-                         a.targetTipe === 'STUDIO'       ? 'Studio' :
-                         ROLE_OPTIONS.find(r => r.value === a.targetId)?.label.split(' ').slice(1).join(' ') ?? a.targetId}
-                      </span>
-                      {(a.dibuatOleh === user?.id || ['KOORDINATOR','PENDAMPING','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','KEPALA_EKOSISTEM','ADVISOR'].some(r => user?.roles?.some(ur => ur.roleType === r))) && (
-                        <button onClick={() => handleDelete(a.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', fontSize: 12, fontWeight: 600, padding: '2px 6px', borderRadius: 4 }}>
-                          Hapus
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
-                    {a.namaPembuat} · {formatTanggal(a.createdAt)}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: a.konten ? 8 : 0 }}>
-                    <span className="ff-chip" style={{ fontSize: 11.5, padding: '2px 10px', background: JENIS_WARNA[a.jenis ?? 'PENGUMUMAN'] }}>{JENIS_INFO[a.jenis ?? 'PENGUMUMAN']}</span>
-                    {a.tanggalEvent && <span style={{ fontSize: 12.5, fontWeight: 600 }}>📅 {new Date(a.tanggalEvent).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}{a.jamEvent ? ` · ${a.jamEvent}` : ''}</span>}
-                    {a.tautan && <a href={a.tautan} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Buka tautan →</a>}
-                  </div>
-                  {a.konten && <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                    {a.konten}
-                  </div>}
-                </div>
+            <article key={a.id} className="post">
+              <div className="meta">
+                <span className={`lbl-j j-${a.jenis ?? 'PENGUMUMAN'}`}>{JENIS_INFO[a.jenis ?? 'PENGUMUMAN']}</span>
+                <span>{a.namaPembuat} · {formatTanggal(a.createdAt)}</span>
+                <span>Untuk: {a.targetTipe === 'ALL' ? 'Semua' : a.targetTipe === 'CIRCLE' ? 'Circle' : a.targetTipe === 'RUMAH_USAHA' ? 'Rumah Usaha' : a.targetTipe === 'STUDIO' ? 'Studio' : ROLE_OPTIONS.find(r => r.value === a.targetId)?.label.split(' ').slice(1).join(' ') ?? a.targetId}</span>
+                {(a.dibuatOleh === user?.id || ['KOORDINATOR','PENDAMPING','KEPALA_CIRCLE','KEPALA_RUMAH_USAHA','KEPALA_EKOSISTEM','ADVISOR'].some(r => user?.roles?.some(ur => ur.roleType === r))) && (
+                  <button type="button" className="kecil" style={{ marginLeft: 'auto' }} onClick={() => handleDelete(a.id)}>Hapus</button>
+                )}
               </div>
-            </div>
+              <h3>{a.judul}</h3>
+              {a.konten && <p>{a.konten}</p>}
+              {(a.tanggalEvent || a.tautan) && <div className="meta">
+                {a.tanggalEvent && <span>📅 {new Date(a.tanggalEvent).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}{a.jamEvent ? ` · ${a.jamEvent}` : ''}</span>}
+                {a.tautan && <a href={a.tautan} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', fontWeight: 600 }}>Buka tautan →</a>}
+              </div>}
+            </article>
           ))}
         </div>
       )}
       </>)}
-    </>
+    </div>
   )
 }

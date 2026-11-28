@@ -96,10 +96,11 @@ export const rekapManifest = wrap(async (req, res) => {
   const ids = [...new Set(per.flatMap(s => s.anggota.map(a => a.id)))]
   const isi = await prisma.manifest.findMany({ where: { bulan, tahun, userId: { in: ids } } })
   const peta = new Map(isi.map(m => [m.userId, m.isi]))
+  const diubah = new Map(isi.map(m => [m.userId, m.updatedAt]))
   const sekarang = kini.tahun * 12 + kini.bulan, dilihat = tahun * 12 + bulan
   return res.json({ success: true, data: { bulan, tahun, terkunci: dilihat < sekarang, batas: batasLabel({ tahun, bulan }),
     totalOrang: ids.length, sudahOrang: ids.filter(id => peta.has(id)).length,
-    studio: per.map(s => ({ id: s.id, nama: s.nama, anggota: s.anggota.map(a => ({ ...a, isi: peta.get(a.id) ?? null })) })) } })
+    studio: per.map(s => ({ id: s.id, nama: s.nama, anggota: s.anggota.map(a => ({ ...a, isi: peta.get(a.id) ?? null, diubah: diubah.get(a.id) ?? null })) })) } })
 })
 // GET /api/sop?studioId — lihat saja; tanpa studioId = daftar studio yang dikelola
 export const lihatSop = wrap(async (req, res) => {
