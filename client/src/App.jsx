@@ -5,7 +5,7 @@ import LoginPage from './pages/Auth/LoginPage'
 import Sidebar from './components/layout/Sidebar'
 import Topbar, { PAGE_TITLES } from './components/layout/Topbar'
 // Halaman lama tanpa judul sendiri: judulnya ditulis kerangka (bilah atas baru tidak memuat judul).
-const JUDUL_DARI_KERANGKA = new Set(['Calendar', 'Kader', 'Members', 'Profile', 'SDM'])
+const JUDUL_DARI_KERANGKA = new Set(['Kader', 'Members', 'Profile', 'SDM'])
 import CommandPalette from './components/common/CommandPalette'
 import { FITUR } from './config/ecosystem'
 
