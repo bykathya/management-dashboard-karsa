@@ -295,3 +295,16 @@
 .kd .hr-tag.kanan { left: auto; right: 10px; background: var(--bg-card); }
 .kd .hr-dok { font-size: 12px; padding: 2px 9px; border: 1.5px solid var(--line); background: var(--pink-candy); color: #111; }
 .kd .hr-dok.ada { background: var(--accent); color: #111; }
+
+/* Unduh Laporan */
+.kd .unduh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.kd .unduh-k { background: var(--bg-card); border: 1.5px solid var(--line); border-radius: 26px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.kd .unduh-k.utama { background: var(--accent); color: #111; }
+.kd .unduh-k.on { box-shadow: 0 0 0 3px var(--pink-candy); }
+.kd .unduh-k h2 { margin: 0; font-size: 18px; }
+.kd .unduh-k p { margin: 0; color: inherit; opacity: .8; font-size: 14.5px; line-height: 1.55; flex: 1; }
+.kd .unduh-k .ikon { width: 46px; height: 46px; border: 1.5px solid var(--line); border-radius: 14px; display: grid; place-items: center; font-family: var(--font-judul); font-weight: 700; font-size: 12px; color: #111; flex: none; }
+.kd .unduh-k select { min-height: 44px; border: 1.5px solid var(--line); border-radius: 999px; padding: 0 16px; font: inherit; background: var(--bg-card); color: var(--text); }
+.kd .unduh-k .tombol { justify-content: center; width: 100%; white-space: normal; text-align: center; }
+.kd .unduh-k.utama .tombol.hitam { background: #111; color: var(--accent); }
+.kd .unduh-lain summary { padding: 18px 20px; font-weight: 700; cursor: pointer; }

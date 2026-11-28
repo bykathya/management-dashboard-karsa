@@ -35,6 +35,7 @@ export default function Reports({ onNavigate }) {
   const [bulanKoperasi, setBulanKoperasi] = useState(now.getMonth() + 1)
   const [tahunKoperasi, setTahunKoperasi] = useState(now.getFullYear())
   const [errorMsg, setErrorMsg] = useState(null)
+  const [buka, setBuka] = useState(null)
 
   // ── Download CSV helpers ───────────────────────────────
   const [loadingCsvMembers,   setLoadingCsvMembers]   = useState(false)
@@ -132,48 +133,49 @@ export default function Reports({ onNavigate }) {
   }
 
 
+  const muatPanel = <div className="kartu" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>
+  const KARTU = [
+    bisaExsum && { id: 'exsum', ikon: 'PDF', warna: '#fff', utama: true, judul: 'Executive Summary', ket: 'Ringkasan satu circle dalam slide 16:9: omset, kas, dana tengah, pencapaian, dan foto para pemimpin.', tombol: 'Buat & unduh Executive Summary' },
+    { id: 'mingguan', ikon: 'PDF', warna: 'var(--pink-candy)', judul: 'Weekly Report Unit', ket: 'Laporan mingguan per studio: order, omset per akun, dan aktivitas admin.', tombol: 'Unduh PDF' },
+    { id: 'bulanan', ikon: 'PDF', warna: 'var(--kd-kuning)', judul: 'Monthly Report', ket: 'Rekap bulanan: omset vs CPM, pertumbuhan, dan rekap Lempar Kerjaan.', tombol: 'Unduh PDF' },
+  ].filter(Boolean)
   return (
-    <>
-      <div className="page-header">
-        <h1>Unduh Laporan</h1>
-        <p>Generate dan download semua dokumen laporan {ECOSYSTEM_NAME} dalam format PDF</p>
-      </div>
+    <div className="kd">
+      <div className="kepala"><h1>Unduh Laporan</h1><span className="chip">PDF · CSV</span></div>
+      <p className="sub">Laporan siap unduh untuk rapat dan arsip. Angkanya diambil otomatis dari Daily Sheet semua studio.</p>
 
       {errorMsg && (
         <div className="login-error" style={{ marginBottom: 20 }}>{errorMsg}</div>
       )}
 
-      {bisaExsum && <div style={{ marginBottom: 20 }}>
-        <Suspense fallback={<div className="card" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>}>
-          <PembuatExecutiveSummary />
-        </Suspense>
-      </div>}
-
-      <div style={{ marginBottom: 20 }}>
-        <Suspense fallback={<div className="card" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>}>
-          <PembuatProgressReport />
-        </Suspense>
+      <div className="unduh-grid">
+        {KARTU.map(k => (
+          <div key={k.id} className={`unduh-k${k.utama ? ' utama' : ''}${buka === k.id ? ' on' : ''}`}>
+            <div className="baris"><span className="ikon" style={{ background: k.warna }}>{k.ikon}</span><h2>{k.judul}</h2></div>
+            <p>{k.ket}</p>
+            <button type="button" className={`tombol${k.utama ? ' hitam' : ''}`} onClick={() => setBuka(buka === k.id ? null : k.id)}>{buka === k.id ? 'Tutup' : k.tombol}</button>
+          </div>
+        ))}
+        <div className="unduh-k">
+          <div className="baris"><span className="ikon" style={{ background: '#fff' }}>CSV</span><h2>Data mentah</h2></div>
+          <p>Semua catatan omset per studio per minggu untuk diolah di Excel atau Google Sheets.</p>
+          <select value={`${tahunOmset}-${bulanOmset}`} onChange={e => { const [t, b] = e.target.value.split('-').map(Number); setTahunOmset(t); setBulanOmset(b) }} aria-label="Bulan data mentah">
+            {Array.from({ length: 12 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); return <option key={i} value={`${d.getFullYear()}-${d.getMonth() + 1}`}>{getBulanLabel(d.getMonth() + 1, d.getFullYear())}</option> })}
+          </select>
+          <button type="button" className="tombol" onClick={downloadCsvOmset} disabled={loadingCsvOmset}>{loadingCsvOmset ? 'Mengambil data…' : 'Unduh CSV'}</button>
+        </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <Suspense fallback={<div className="card" style={{ padding: 28, textAlign: 'center' }}><span className="spinner" /></div>}>
-          <PembuatLaporanMingguan onNavigate={onNavigate} />
-        </Suspense>
-      </div>
+      {buka && <div style={{ marginTop: 16 }}><Suspense fallback={muatPanel}>
+        {buka === 'exsum' && <PembuatExecutiveSummary />}
+        {buka === 'mingguan' && <PembuatLaporanMingguan onNavigate={onNavigate} />}
+        {buka === 'bulanan' && <PembuatProgressReport />}
+      </Suspense></div>}
 
-      <Suspense fallback={null}>
-        <KartuRaportSiswa />
-      </Suspense>
-
-      {/* Info PDF */}
-      <div style={{ marginTop: 24, padding: '14px 18px', background: 'var(--bg-surface)', borderRadius: 12, fontSize: 13, color: 'var(--text-muted)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
-        <span>
-          PDF dibuat langsung di browser — tidak ada data yang dikirim ke server eksternal.
-          Pastikan data laporan mingguan sudah diinput sebelum generate.
-        </span>
-      </div>
-
+      <details className="kartu unduh-lain" style={{ marginTop: 20 }}>
+        <summary>Unduhan lainnya (data anggota, rekrutmen, koperasi, raport)</summary>
+        <div style={{ padding: '0 20px 20px' }}>
+          <Suspense fallback={null}><KartuRaportSiswa /></Suspense>
       {/* ── CSV Downloads ── */}
       <div style={{ marginTop: 32 }}>
         <h2 style={{ fontSize: 17, fontWeight: 800, marginBottom: 4 }}>Unduh CSV</h2>
@@ -262,6 +264,9 @@ export default function Reports({ onNavigate }) {
 
         </div>
       </div>
-    </>
+        </div>
+      </details>
+      <p className="catatan">PDF dibuat langsung di browser, tidak ada data yang dikirim ke server luar.</p>
+    </div>
   )
 }
